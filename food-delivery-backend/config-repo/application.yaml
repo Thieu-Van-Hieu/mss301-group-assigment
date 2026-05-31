@@ -1,0 +1,14 @@
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Tách danh sách cổng hiển thị ra biến ACTUATOR_EXPOSE_ENDPOINTS
+        include: ${ACTUATOR_EXPOSE_ENDPOINTS:health,info}
+  endpoint:
+    health:
+      # Tách chế độ hiển thị chi tiết health ra biến ACTUATOR_HEALTH_SHOW_DETAILS (always/never)
+      show-details: ${ACTUATOR_HEALTH_SHOW_DETAILS:always}
+    env:
+      # Tách chế độ hiển thị giá trị cấu hình ra biến ACTUATOR_ENV_SHOW_VALUES (always/never/when_authorized)
+      show-values: ${ACTUATOR_ENV_SHOW_VALUES:when_authorized}

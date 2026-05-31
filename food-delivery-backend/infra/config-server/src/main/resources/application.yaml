@@ -1,25 +1,16 @@
-server:
-  port: 8888 # Cổng mặc định và phổ thông của Config Server trong Microservice
+server: # Cấu hình các thông số liên quan đến môi trường chạy của máy chủ nhúng (Embedded Server)
+  # Tách cổng chạy của Config Server ra biến CONFIG_SERVER_PORT, mặc định là 8888
+  port: ${CONFIG_SERVER_PORT:8888}
 
-spring:
+spring: # Cấu hình các thành phần lõi thuộc hệ sinh thái của framework Spring
   application:
     name: config-server
   profiles:
-    # Chế độ "native" bảo Spring đọc các file cấu hình trực tiếp từ một thư mục trên máy tính (Local)
-    # Thay vì phải kết nối với một kho chứa Git (Git repository) phức tạp khi làm dev
-    active: native
-  cloud:
+    # Tách chế độ chạy ra biến CONFIG_SERVER_PROFILE, mặc định là native để đọc file local
+    active: ${CONFIG_SERVER_PROFILE:native}
+  cloud: # Cấu hình các tính năng dành cho mô hình hệ thống phân tán (Microservices) của Spring Cloud
     config:
       server:
         native:
-          # Chỉ đường dẫn tới thư mục config-repo nằm ở gốc dự án của bạn
-          search-locations: file:./food-delivery-backend/config-repo/ # NOTE: Chú ý root directory có thể khác
-# Mở cổng Actuator để ta có thể check xem Config Server chạy ổn không
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info, env # TODO: Chỉ nên để "health" và "info" trong môi trường production, còn "env" thì chỉ nên để trong môi trường phát triển để tránh lộ thông tin nhạy cảm về cấu hình môi trường (environment variables) của ứng dụng.
-  endpoint:
-    env:
-      show-values: always # TODO: Chỉ nên để "always" trong môi trường phát triển, khi deploy lên production thì nên đổi thành "never" để tránh lộ thông tin nhạy cảm về cấu hình môi trường (environment variables) của ứng dụng.
+          # ĐƯỜNG DẪN ĐỘNG: Ghép từ biến gốc dự án ${CONFIG_REPO_ROOT} và tên thư mục chứa cấu hình ${CONFIG_REPO_DIR}
+          search-locations: file:${CONFIG_REPO_ROOT:./food-delivery-backend}/${CONFIG_REPO_DIR:config-repo}/
