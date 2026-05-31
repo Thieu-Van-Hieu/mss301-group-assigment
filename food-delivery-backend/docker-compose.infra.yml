@@ -1,0 +1,51 @@
+services:
+  # ==========================================
+  # 1. KEYCLOAK SERVER (Giữ nguyên cấu hình trước)
+  # ==========================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    container_name: food-delivery-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HTTP_PORT: ${KEYCLOAK_PORT}
+    ports:
+      - "${KEYCLOAK_PORT}:${KEYCLOAK_PORT}"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - food-delivery-network
+
+  # ==========================================
+  # 2. KAFKA BROKER (Chuẩn KRaft - Không Zookeeper)
+  # ==========================================
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: food-delivery-kafka
+    ports:
+      - "${KAFKA_PORT_EXTERNAL}:${KAFKA_PORT_EXTERNAL}" # Map port 9092 ra ngoài máy thật
+    environment:
+      KAFKA_NODE_ID: ${KAFKA_NODE_ID}
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      
+      # Sử dụng biến môi trường để định cấu hình các cổng kết nối
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '${KAFKA_NODE_ID}@kafka:${KAFKA_PORT_CONTROLLER}'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:${KAFKA_PORT_EXTERNAL},CONTROLLER://0.0.0.0:${KAFKA_PORT_CONTROLLER},PLAINTEXT_HOST://0.0.0.0:${KAFKA_PORT_INTERNAL}'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:${KAFKA_PORT_EXTERNAL},PLAINTEXT_HOST://kafka:${KAFKA_PORT_INTERNAL}'
+      
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+      
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    networks:
+      - food-delivery-network
+
+volumes:
+  keycloak_data:
+
+networks:
+  food-delivery-network:
+    driver: bridge
