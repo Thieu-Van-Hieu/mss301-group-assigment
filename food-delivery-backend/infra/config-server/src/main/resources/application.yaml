@@ -1,6 +1,25 @@
+server:
+  port: 8888 # Cổng mặc định và phổ thông của Config Server trong Microservice
+
 spring:
   application:
     name: config-server
-   
-server:
-  port: 8082
+  profiles:
+    # Chế độ "native" bảo Spring đọc các file cấu hình trực tiếp từ một thư mục trên máy tính (Local)
+    # Thay vì phải kết nối với một kho chứa Git (Git repository) phức tạp khi làm dev
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # Chỉ đường dẫn tới thư mục config-repo nằm ở gốc dự án của bạn
+          search-locations: file:./food-delivery-backend/config-repo/ # NOTE: Chú ý root directory có thể khác
+# Mở cổng Actuator để ta có thể check xem Config Server chạy ổn không
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info, env # TODO: Chỉ nên để "health" và "info" trong môi trường production, còn "env" thì chỉ nên để trong môi trường phát triển để tránh lộ thông tin nhạy cảm về cấu hình môi trường (environment variables) của ứng dụng.
+  endpoint:
+    env:
+      show-values: always # TODO: Chỉ nên để "always" trong môi trường phát triển, khi deploy lên production thì nên đổi thành "never" để tránh lộ thông tin nhạy cảm về cấu hình môi trường (environment variables) của ứng dụng.
