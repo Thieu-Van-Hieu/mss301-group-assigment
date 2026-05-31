@@ -1,0 +1,11 @@
+server:
+  port: 8761 # Port mặc định và là quy chuẩn quốc tế của Eureka Server
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    # Vì đây là ông chủ Tổng đài (Server), ông không cần tự đăng ký chính mình vào danh bạ
+    register-with-eureka: false
+    # Ông cũng không cần đi bắt nạt hay lấy danh bạ từ ai khác về nữa
+    fetch-registry: false

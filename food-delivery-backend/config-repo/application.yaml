@@ -1,3 +1,14 @@
+eureka:
+  client:
+    service-url:
+      # Tách URL Eureka ra biến EUREKA_SERVER_URL, mặc định là http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+  instance:
+    # Tách tần suất gửi nhịp tim ra biến EUREKA_HEARTBEAT_INTERVAL (giây)
+    lease-renewal-interval-in-seconds: ${EUREKA_HEARTBEAT_INTERVAL:5}
+    # Tách thời gian chờ nhịp tim tối đa ra biến EUREKA_HEARTBEAT_TIMEOUT (giây)
+    lease-expiration-duration-in-seconds: ${EUREKA_HEARTBEAT_TIMEOUT:10}
+    prefer-ip-address: true
 
 management:
   endpoints:
