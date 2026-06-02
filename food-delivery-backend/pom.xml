@@ -31,7 +31,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-boot.version>3.5.14</spring-boot.version>
 		<lombok.version>1.18.46</lombok.version>
-		<spring-cloud.version>2025.1.1</spring-cloud.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
 		<jjwt.version>0.12.5</jjwt.version>
 		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 	</properties>

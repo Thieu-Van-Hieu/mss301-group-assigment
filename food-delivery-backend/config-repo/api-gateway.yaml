@@ -1,0 +1,13 @@
+server: # Cấu hình các thông số liên quan đến môi trường chạy của máy chủ nhúng (Embedded Server)
+  # Tách cổng chạy của Gateway ra biến GATEWAY_PORT, mặc định là 8080
+  port: ${GATEWAY_PORT:8080}
+
+spring: # Cấu hình các thành phần lõi thuộc hệ sinh thái của framework Spring
+  security: # Cấu hình tầng bảo mật nâng cao cho ứng dụng dựa trên khung Spring Security
+    oauth2: # Cấu hình chuẩn xác thực và phân quyền mở OAuth2 cho toàn bộ hệ thống
+      resourceserver: # Định danh ứng dụng đóng vai trò là một Máy chủ tài nguyên bảo mật (Resource Server)
+        jwt: # Khai báo cơ chế kiểm tra tính hợp lệ của người dùng dựa trên cấu trúc chuỗi Token dạng JWT
+          # Ghép chuỗi tự động từ máy chủ, cổng chạy và không gian bảo mật (Realm) của Keycloak
+          issuer-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:food-delivery}
+          # Ghép chuỗi tự động để lấy đường dẫn tải khóa công khai (Public Key) xác thực chữ ký số
+          jwk-set-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:food-delivery}/protocol/openid-connect/certs
