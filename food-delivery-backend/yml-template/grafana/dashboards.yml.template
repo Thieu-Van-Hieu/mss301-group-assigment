@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'System Dashboards'
+    orgId: 1
+    folder: 'Infrastructure'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      # Đường dẫn thư mục bên trong container Grafana chứa các file JSON
+      path: /etc/grafana/provisioning/dashboards/json
