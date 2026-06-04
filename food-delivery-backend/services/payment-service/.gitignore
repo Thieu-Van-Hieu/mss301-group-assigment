@@ -1,0 +1,47 @@
+# ============================================
+# Ignore everything, then whitelist src/ only
+# ============================================
+
+# Ignore all files by default
+*
+
+# ---- Whitelist: source code ----
+!src/
+!src/**
+
+# ---- Whitelist: build config (needed to compile) ----
+!pom.xml
+!mvnw
+!mvnw.cmd
+!.mvn/
+!.mvn/**
+
+# ---- Whitelist: this file itself ----
+!.gitignore
+
+# ============================================
+# Explicitly ignore (safety net)
+# ============================================
+
+# Build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*~
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# Docs (remove these lines if you want to track docs)
+*.md
