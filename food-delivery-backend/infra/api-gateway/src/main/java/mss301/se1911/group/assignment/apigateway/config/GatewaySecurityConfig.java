@@ -23,7 +23,7 @@ public class GatewaySecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable) // Tạm thời tắt CSRF khi chạy local, sẽ bật lại sau
                 .authorizeExchange(exchange -> exchange
                         // Luồng đăng ký tài khoản mới: Bắt buộc phải MỞ (permitAll) để khách hàng vãng lai bấm đăng ký được
-                        .pathMatchers("/api/v1/customers/register").permitAll()
+                        .pathMatchers("/api/v1/auth/register").permitAll()
 
                         // Mọi API liên quan đến xem/sửa cấu hình hệ thống (Actuator) cũng mở cho Prometheus check tải
                         .pathMatchers("/actuator/**").permitAll()
