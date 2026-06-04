@@ -1,37 +1,41 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# 1. Chặn toàn bộ các FILE mặc định ở mọi ngóc ngách, giữ lại cấu trúc thư mục gốc
+**/*
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# 2. Cho phép Git đi vào các thư mục quản lý Microservices
+!**/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# 3. Giữ lại các file cấu hình quan trọng ở thư mục gốc
+!.gitattributes
+!.gitignore
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# 4. Giữ lại toàn bộ mã nguồn và file cấu hình Maven của Microservices
+!**/src/**
+!**/resources/**
+!**/pom.xml
+!**/mvnw
+!**/mvnw.cmd
+!**/.mvn/
+!**/.mvn/wrapper/maven-wrapper.jar
+!**/.mvn/wrapper/maven-wrapper.properties
+!food-delivery-backend/README.md
+!food-delivery-backend/.github/
+!food-delivery-backend/.github/**
+!food-delivery-backend/config-repo/
+!food-delivery-backend/config-repo/**
 
-### VS Code ###
-.vscode/
+# 5. Giữ lại các file cấu hình Docker
+!**/docker-compose.yml
+!**/docker-compose.infra.yml
+!**/**.yaml.template
+!**/**.yml.template
 
-### ENV Files ###
-.env*
-!.env.example
+# 6. Loại bỏ hoàn toàn các file rác sinh ra do IDE và khi Build
+**/.idea/
+**/.vscode/
+**/*.iml
+**/.classpath
+**/.project
+**/.settings/
+**/.factorypath
+**/target/
+**/bin/
