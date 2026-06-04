@@ -23,13 +23,20 @@
 !food-delivery-backend/config-repo/
 !food-delivery-backend/config-repo/**
 
-# 5. Giữ lại các file cấu hình Docker
+# 5. Giữ lại các file cho database
+!food-delivery-database/
+!food-delivery-database/**
+!**/**.sql
+
+# 6. Giữ lại các file cấu hình Docker
 !**/docker-compose.yml
 !**/docker-compose.infra.yml
 !**/**.yaml.template
 !**/**.yml.template
+!**/grafana-dashboards/
+!**/grafana-dashboards/**
 
-# 6. Loại bỏ hoàn toàn các file rác sinh ra do IDE và khi Build
+# 7. Loại bỏ hoàn toàn các file rác sinh ra do IDE và khi Build
 **/.idea/
 **/.vscode/
 **/*.iml
