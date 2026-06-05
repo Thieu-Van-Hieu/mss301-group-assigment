@@ -53,6 +53,11 @@
 !food-delivery-frontend/packages/
 !food-delivery-frontend/packages/**
 
+# Cấu hình cho một số thư viện
+# OpenAPI Generator
+!food-delivery-frontend/openapitools.json
+food-delivery-frontend/**/generated
+
 # ==============================================================================
 # V. ĐỊNH CẤU HÌNH HẠ TẦNG DOCKER & MONITORING
 # ==============================================================================

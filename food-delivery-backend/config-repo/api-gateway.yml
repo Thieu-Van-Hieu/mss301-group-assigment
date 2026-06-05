@@ -1,23 +1,39 @@
-server: # Cấu hình các thông số liên quan đến môi trường chạy của máy chủ nhúng (Embedded Server)
-  # Tách cổng chạy của Gateway ra biến GATEWAY_PORT, mặc định là 8080
+server:
   port: ${API_GATEWAY_PORT:8080}
 
-spring: # Cấu hình các thành phần lõi thuộc hệ sinh thái của framework Spring
-  cloud: # Cấu hình các tính năng dành cho mô hình hệ thống phân tán (Microservices) của Spring Cloud
-    gateway: # Kích hoạt và thiết lập cấu hình cho module định tuyến Spring Cloud Gateway
+springdoc:
+  enable-native-support: true
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    # 🌟 ĐÂY LÀ ĐOẠN ĐỊNH NGHĨA GỘP SWAGGER THỦ CÔNG
+    urls:
+      - name: Identity Service # Tên hiển thị trong Dropdown của Swagger UI
+        url: /api/v1/auth/v3/api-docs # Đường dẫn Swagger của Service thông qua Route của Gateway
+        displayName: Identity Service API
+
+spring:
+  cloud:
+    gateway:
       server:
         webflux:
-          routes: # Khai báo danh sách các tuyến đường cấu hình để điều hướng luồng dữ liệu của Request
-            - id: identity-service-route # Khởi tạo một định danh độc nhất cho tuyến đường dẫn tới dịch vụ khách hàng
-              uri: lb://identity-service # Chuyển tiếp dữ liệu bằng cơ chế cân bằng tải động dựa trên tên đăng ký ở Eureka
-              predicates: # Định nghĩa các điều kiện bắt buộc để một Request kích hoạt tuyến đường này
-                - Path=/api/v1/auth/** # Kiểm tra nếu đường dẫn URL bắt đầu bằng cụm này thì cho phép đi qua tuyến đường
+          routes:
+            # 🌟 ROUTE 1: Điều hướng các API nghiệp vụ thông thường
+            - id: identity-service-route
+              uri: lb://identity-service
+              predicates:
+                - Path=/api/v1/auth/**
+            
+            # 🌟 ROUTE 2: Route này cực kỳ quan trọng, giúp Gateway tải được file JSON docs từ Service về
+            - id: identity-service-openapi-route
+              uri: lb://identity-service
+              predicates:
+                - Path=/api/v1/auth/v3/api-docs
 
-  security: # Cấu hình tầng bảo mật nâng cao cho ứng dụng dựa trên khung Spring Security
-    oauth2: # Cấu hình chuẩn xác thực và phân quyền mở OAuth2 cho toàn bộ hệ thống
-      resourceserver: # Định danh ứng dụng đóng vai trò là một Máy chủ tài nguyên bảo mật (Resource Server)
-        jwt: # Khai báo cơ chế kiểm tra tính hợp lệ của người dùng dựa trên cấu trúc chuỗi Token dạng JWT
-          # Ghép chuỗi tự động từ máy chủ, cổng chạy và không gian bảo mật (Realm) của Keycloak
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
           issuer-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:food-delivery}
-          # Ghép chuỗi tự động để lấy đường dẫn tải khóa công khai (Public Key) xác thực chữ ký số
           jwk-set-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:food-delivery}/protocol/openid-connect/certs

@@ -8,6 +8,7 @@
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "check-types": "turbo run check-types",
         "preinstall": "node -e \"if(process.env.npm_config_user_agent && !process.env.npm_config_user_agent.includes('pnpm')) { console.error('\\n\\u001b[31m❌ TOANG RỒI PHEN ƠI! Nhóm mình thống nhất dùng PNPM cho Multi-module. Vui lòng gõ [pnpm install] chứ không dùng npm/yarn nhé!\\u001b[0m\\n'); process.exit(1); }\"",
+        "api-generator": "tsx --env-file=.env packages/api/src/sync-api.ts"
     },
     "devDependencies": {
         "@types/node": "^22.15.3",

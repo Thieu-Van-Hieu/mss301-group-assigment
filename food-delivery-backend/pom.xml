@@ -35,11 +35,13 @@
 		<lombok-mapstruct-binding.version>0.2.0
 		</lombok-mapstruct-binding.version> <!-- FIXED: Bổ sung version binding -->
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
+		<spring-cloud-config.version>4.3.3</spring-cloud-config.version>
 		<jjwt.version>0.12.5</jjwt.version>
 		<keycloak.version>24.0.0</keycloak.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 		<redisson.version>3.45.0</redisson.version>
+		<springdoc.version>2.5.0</springdoc.version>
 	</properties>
 
 	<dependencies>
@@ -71,9 +73,14 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.redisson</groupId>
-				<artifactId>redisson-spring-boot-starter</artifactId>
-				<version>${redisson.version}</version>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+				<version>${springdoc.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+				<version>${springdoc.version}</version>
 			</dependency>
 
 			<dependency>
@@ -82,6 +89,24 @@
 				<version>${keycloak.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-config-server</artifactId>
+				<version>${spring-cloud-config.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-config-client</artifactId>
+				<version>${spring-cloud-config.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.redisson</groupId>
+				<artifactId>redisson-spring-boot-starter</artifactId>
+				<version>${redisson.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
