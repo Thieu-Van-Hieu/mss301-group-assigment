@@ -30,7 +30,22 @@ spring:
               uri: lb://identity-service
               predicates:
                 - Path=/api/v1/auth/v3/api-docs
-
+          globalcors:
+            # Kích hoạt CORS preflight cho các request OPTIONS không khớp với route định sẵn
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]': # Áp dụng cấu hình này cho TẤT CẢ các API đi qua Gateway
+                allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                  - PATCH
+                allowedHeaders: "*"
+                allowCredentials: true
+                maxAge: 3600
   security:
     oauth2:
       resourceserver:

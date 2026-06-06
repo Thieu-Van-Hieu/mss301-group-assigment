@@ -22,6 +22,7 @@ public class GatewaySecurityConfig {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable) // Tạm thời tắt CSRF khi chạy local, sẽ bật lại sau
                 .authorizeExchange(exchange -> exchange
+                        .pathMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers(
                                 // Luồng đăng ký tài khoản mới: Bắt buộc phải MỞ (permitAll) để khách hàng vãng lai bấm đăng ký được
                                 "/api/v1/auth/register",
