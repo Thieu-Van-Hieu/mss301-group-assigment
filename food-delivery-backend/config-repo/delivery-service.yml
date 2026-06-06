@@ -1,0 +1,11 @@
+server:
+  port: ${DELIVERY_SERVICE_PORT:8086}
+
+spring:
+  datasource:
+    url: ${DELIVERY_DB_URL:jdbc:postgresql://localhost:5432/delivery_db}
+    username: ${DELIVERY_DB_USERNAME:postgres}
+    password: ${DELIVERY_DB_PASSWORD:admin}
+  flyway:
+    enabled: ${DELIVERY_FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
