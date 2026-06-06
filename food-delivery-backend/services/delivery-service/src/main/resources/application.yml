@@ -1,13 +1,5 @@
 spring:
   application:
     name: delivery-service
-  datasource:
-    url: jdbc:postgresql://localhost:5432/delivery_db
-    username: postgres
-    password: admin
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-server:
-  port: 8085
-
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
