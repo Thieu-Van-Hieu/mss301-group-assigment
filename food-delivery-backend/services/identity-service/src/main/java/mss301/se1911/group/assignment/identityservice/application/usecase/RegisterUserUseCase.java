@@ -17,7 +17,7 @@ public class RegisterUserUseCase {
 
     public Account execute(RegisterUserCommand command) {
         // 1. Tạo Domain Object
-        Account newAccount = Account.create(command.username(), command.email(), command.role());
+        Account newAccount = Account.create(command.fullName(), command.phoneNumber(), command.email(), command.role());
 
         // 2. Gọi Adapter qua Port
         String externalId = identityRepository.create(newAccount, command.password());
@@ -27,12 +27,13 @@ public class RegisterUserUseCase {
 
         // 4. 
         // 2. Tạo Domain Event với các thông tin tối giản chuẩn chỉnh
-        UserCreatedEvent event = new UserCreatedEvent(
-                newAccount.getId().value().toString(),
-                newAccount.getUsername(),
-                newAccount.getEmail(),
-                newAccount.getRole()
-        );
+        UserCreatedEvent event = UserCreatedEvent.builder()
+                .userId(newAccount.getId().value().toString())
+                .fullName(newAccount.getFullName())
+                .email(newAccount.getEmail())
+                .phoneNumber(newAccount.getPhoneNumber())
+                .role(newAccount.getRole())
+                .build();
 
         // 3. Phát sự kiện ra thế giới bên ngoài thông qua Port
         eventPublisher.publishUserCreated(event);

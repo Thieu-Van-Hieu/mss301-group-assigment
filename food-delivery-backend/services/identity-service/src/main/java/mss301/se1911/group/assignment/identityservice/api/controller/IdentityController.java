@@ -25,9 +25,10 @@ public class IdentityController {
     public ResponseEntity<String> register(@RequestBody UserRegisterRequest request) {
         // Map từ REST DTO sang Application Command để đẩy vào UseCase
         RegisterUserCommand command = new RegisterUserCommand(
-                request.username(),
-                request.password(),
+                request.fullName(),
+                request.phoneNumber(),
                 request.email(),
+                request.password(),
                 request.role().toLowerCase()
         );
 
