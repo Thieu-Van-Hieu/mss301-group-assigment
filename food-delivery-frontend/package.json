@@ -1,0 +1,29 @@
+{
+    "name": "food-delivery-frontend",
+    "private": true,
+    "scripts": {
+        "dev": "dotenv -e .env -- turbo run dev",
+        "build": "dotenv -e .env.production -- turbo run build",
+        "lint": "turbo run lint",
+        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "check-types": "turbo run check-types",
+        "preinstall": "node -e \"if(process.env.npm_config_user_agent && !process.env.npm_config_user_agent.includes('pnpm')) { console.error('\\n\\u001b[31m❌ TOANG RỒI PHEN ƠI! Nhóm mình thống nhất dùng PNPM cho Multi-module. Vui lòng gõ [pnpm install] chứ không dùng npm/yarn nhé!\\u001b[0m\\n'); process.exit(1); }\"",
+        "api-generator": "tsx --env-file=.env packages/api/src/sync-api.ts"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.3",
+        "axios": "^1.17.0",
+        "child_process": "^1.0.2",
+        "dotenv-cli": "^11.0.0",
+        "eslint-plugin-react-hooks": "^7.1.1",
+        "eslint-plugin-react-refresh": "^0.5.2",
+        "prettier": "^3.7.4",
+        "tsx": "^4.22.4",
+        "turbo": "^2.9.16",
+        "typescript": "5.9.2"
+    },
+    "packageManager": "pnpm@9.0.0",
+    "engines": {
+        "node": ">=18"
+    }
+}
