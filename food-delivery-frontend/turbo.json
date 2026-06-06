@@ -1,14 +1,13 @@
 {
     "$schema": "https://turbo.build/schema.json",
-    "envMode": "loose",
+    "globalEnv": [
+        "VITE_PORT_MAIN_AUTH",
+        "VITE_API_GATEWAY_URL"
+    ],
     "tasks": {
         "build": {
             "dependsOn": [
                 "^build"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                ".env"
             ],
             "outputs": [
                 "dist/**"
@@ -16,10 +15,7 @@
         },
         "dev": {
             "cache": false,
-            "persistent": true,
-            "env": [
-                "VITE_API_GATEWAY_URL"
-            ]
+            "persistent": true
         }
     }
 }

@@ -1,38 +1,43 @@
 import axios from "axios";
 
-const getApiBaseUrl = (): string => {
-    // 1. Kiểm tra môi trường Node.js / Bundler cũ trước
-    if (typeof process !== "undefined" && process.env?.["VITE_API_GATEWAY_URL"]) {
-        return process.env["VITE_API_GATEWAY_URL"] as string;
-    }
-
-    // 2. Nếu không có, kiểm tra môi trường Vite / ESM hiện đại
-    // Dùng gán qua biến trung gian hoặc check typeof để tránh lỗi biên dịch của một số bundler
-    const meta = (import.meta as any);
-    if (meta && meta.env && meta.env.VITE_API_GATEWAY_URL) {
-        return meta.env.VITE_API_GATEWAY_URL;
-    }
-
-    // 3. Giá trị mặc định (Fallback)
-    return "http://localhost:8080/api/v1";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+const DEFAULT_URL = "http://localhost:8080";
 
 export const apiClient = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        "Content-Type": "application/json",
-    },
-    withCredentials: true,
+	baseURL: DEFAULT_URL,
+	headers: {
+		"Content-Type": "application/json",
+	},
+	withCredentials: true,
 });
 
+// Nơi lưu trữ hàm callback để cập nhật lại các bộ API Generated
+let onUrlChangeCallback: ((newUrl: string) => void) | null = null;
+
+export const _registerUrlChangeListener = (callback: (newUrl: string) => void) => {
+	onUrlChangeCallback = callback;
+};
+
+/**
+ * Hàm thiết lập API Gateway thủ công từ các App Vite.
+ */
+export const setApiGatewayUrl = (customUrl: string): void => {
+	if (customUrl) {
+		// 1. Cập nhật lại cho chính instance Axios
+		apiClient.defaults.baseURL = customUrl;
+
+		// 2. Kích hoạt thông báo để cập nhật các API Controller bên ngoài
+		if (onUrlChangeCallback) {
+			onUrlChangeCallback(customUrl);
+		}
+	}
+};
+
 apiClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            window.location.href = "/login";
-        }
-        return Promise.reject(error);
-    }
+	(response) => response,
+	(error) => {
+		if (error.response?.status === 401) {
+			window.location.href = "/login";
+		}
+		return Promise.reject(error);
+	}
 );

@@ -1,21 +1,40 @@
-// 🌟 1. Khởi tạo cấu hình an toàn cho SDK
-import {apiClient} from "./config/apiClient";
+// 🌟 1. Khởi tạo cấu hình an toàn ban đầu cho SDK
+import {_registerUrlChangeListener, apiClient} from "./config/apiClient";
 import {identityServiceApi} from "./generated";
 
-const apiConfig = new identityServiceApi.Configuration({
-	basePath: apiClient.defaults.baseURL, // Đồng bộ tự động lấy URL từ file .env gốc
+// Dùng let thay vì const để có thể thay đổi/cập nhật cấu hình động
+let apiConfig = new identityServiceApi.Configuration({
+	basePath: apiClient.defaults.baseURL,
 });
-// 🌟 2. KHỞI TẠO SẴN CÁC INSTANCE CONTROLLER (CHẠY TRÊN AXIOS INTERCEPTOR CỦA BẠN)
-export const authApiClient = new identityServiceApi.IdentityControllerApi(
+
+// Khởi tạo instance controller ban đầu
+export let authApiClient = new identityServiceApi.IdentityControllerApi(
 	apiConfig,
 	apiClient.defaults.baseURL,
-	apiClient // Ép bộ code generated chạy trên Axios của bạn
+	apiClient
 );
-// Nếu sau này bạn có thêm các service khác, chỉ cần khởi tạo tiếp tại đây:
-// import { orderServiceApi } from "./generated";
-// export const orderApiClient = new orderServiceApi.OrderControllerApi(apiConfig, apiClient.defaults.baseURL, apiClient);
 
+// 🌟 2. ĐĂNG KÝ LẮNG NGHE ĐỂ CẬP NHẬT ĐỘNG KHI CÓ CONFIG MỚI
+_registerUrlChangeListener((newUrl) => {
+	// Cập nhật lại Configuration Object
+	apiConfig = new identityServiceApi.Configuration({
+		basePath: newUrl,
+	});
 
-// 🌟 3. EXPORT TOÀN BỘ CÁC TYPE/INTERFACE (DTO) ĐỂ FRONTEND CÓ TYPING
+	// Ép instance của SDK sử dụng cấu hình và basePath mới ngay lập tức
+	authApiClient = new identityServiceApi.IdentityControllerApi(
+		apiConfig,
+		newUrl,
+		apiClient
+	);
+
+	// Nếu sau này bạn có thêm các service khác, gán lại tại đây:
+	// orderApiClient = new orderServiceApi.OrderControllerApi(apiConfig, newUrl, apiClient);
+
+	console.log("⚙️ Package API: Đã đồng bộ cấu hình SDK mới thành công với URL:", newUrl);
+});
+
+// 🌟 3. EXPORT TOAN BO CAC TYPE/INTERFACE (DTO) ĐỂ FRONTEND CÓ TYPING
 export * from "./generated";
-export {apiClient} from "./config/apiClient";
+export * from "./types";
+export {apiClient, setApiGatewayUrl} from "./config/apiClient";
