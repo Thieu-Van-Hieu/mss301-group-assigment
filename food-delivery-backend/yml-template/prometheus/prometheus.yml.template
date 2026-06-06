@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 5s # Cứ 5 giây đi gom data 1 lần
+
+scrape_configs:
+  - job_name: 'identity-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      # Vì Prometheus chạy trong Docker, ta dùng host.docker.internal để gọi ngược ra máy thật (Localhost)
+      - targets: ['host.docker.internal:8085']
+
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']

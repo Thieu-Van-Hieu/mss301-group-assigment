@@ -1,6 +1,6 @@
 services:
   # ==========================================
-  # 1. KEYCLOAK SERVER (Giữ nguyên cấu hình trước)
+  # 1. KEYCLOAK SERVER
   # ==========================================
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
@@ -18,28 +18,146 @@ services:
       - food-delivery-network
 
   # ==========================================
-  # 2. KAFKA BROKER (Chuẩn KRaft - Không Zookeeper)
+  # 2. KAFKA BROKER (Chuẩn KRaft)
   # ==========================================
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: food-delivery-kafka
     ports:
-      - "${KAFKA_PORT_EXTERNAL}:${KAFKA_PORT_EXTERNAL}" # Map port 9092 ra ngoài máy thật
+      - "${KAFKA_PORT_EXTERNAL}:${KAFKA_PORT_EXTERNAL}"
     environment:
       KAFKA_NODE_ID: ${KAFKA_NODE_ID}
       KAFKA_PROCESS_ROLES: 'broker,controller'
-      
-      # Sử dụng biến môi trường để định cấu hình các cổng kết nối
       KAFKA_CONTROLLER_QUORUM_VOTERS: '${KAFKA_NODE_ID}@kafka:${KAFKA_PORT_CONTROLLER}'
       KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:${KAFKA_PORT_EXTERNAL},CONTROLLER://0.0.0.0:${KAFKA_PORT_CONTROLLER},PLAINTEXT_HOST://0.0.0.0:${KAFKA_PORT_INTERNAL}'
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:${KAFKA_PORT_EXTERNAL},PLAINTEXT_HOST://kafka:${KAFKA_PORT_INTERNAL}'
-      
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID}
-      
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    networks:
+      - food-delivery-network
+  
+  # ==========================================
+  # 3. CONFIG PROCESSOR (Đổi tên file đầu ra về chuẩn mặc định)
+  # ==========================================
+  config-processor:
+    image: alpine:3.18
+    container_name: food-delivery-config-processor
+    volumes:
+      - ./:/config
+    environment:
+      - IDENTITY_SERVICE_PORT=${IDENTITY_SERVICE_PORT}
+      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
+      - LOKI_PORT=${LOKI_PORT}
+      - PROMTAIL_PORT=${PROMTAIL_PORT}
+      - PROMETHEUS_PORT=${PROMETHEUS_PORT}
+      - GRAFANA_PORT=${GRAFANA_PORT}
+    entrypoint:
+      - "sh"
+      - "-c"
+      - |
+        apk add --no-cache gettext > /dev/null
+        
+        # 1. Cấu hình Prometheus mặc định
+        mkdir -p /config/yml-generated/prometheus
+        envsubst < /config/yml-template/prometheus/prometheus.yml.template > /config/yml-generated/prometheus/prometheus.yml
+        
+        # 2. Cấu hình Promtail mặc định (Tên config.yml)
+        mkdir -p /config/yml-generated/promtail
+        envsubst < /config/yml-template/promtail/config.yml.template > /config/yml-generated/promtail/config.yml
+        
+        # 3. Cấu hình Loki mặc định (Tên local-config.yaml)
+        mkdir -p /config/yml-generated/loki
+        envsubst < /config/yml-template/loki/local-config.yml.template > /config/yml-generated/loki/local-config.yaml
+        
+        # 4. Cấu hình Grafana Provisioning tự động
+        mkdir -p /config/yml-generated/grafana/datasources
+        envsubst < /config/yml-template/grafana/datasources.yml.template > /config/yml-generated/grafana/datasources/datasources.yaml
+        
+        mkdir -p /config/yml-generated/grafana/dashboards/json
+        envsubst < /config/yml-template/grafana/dashboards.yml.template > /config/yml-generated/grafana/dashboards/dashboards.yaml
+        cp /config/grafana-dashboards/services-monitor-dashboard.json /config/yml-generated/grafana/dashboards/json/services-monitor-dashboard.json
+        
+        echo "SUCCESS: Đã tạo cây cấu hình chuẩn không cần dùng lệnh command bổ trợ!"
+    networks:
+      - food-delivery-network
+  
+  # ==========================================
+  # 4. PROMETHEUS SERVER
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: food-delivery-prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
+    volumes:
+      # Đè đè trực tiếp vào thư mục gốc mặc định của Prometheus
+      - ./yml-generated/prometheus:/etc/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      config-processor:
+        condition: service_completed_successfully
+    networks:
+      - food-delivery-network
+
+  # ==========================================
+  # 5. GRAFANA
+  # ==========================================
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: food-delivery-grafana
+    ports:
+      - "${GRAFANA_PORT}:${GRAFANA_PORT}"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      # Mount toàn bộ cấu trúc thư mục chứa cả datasources và dashboards vào thẳng vùng tự động quét của Grafana
+      - ./yml-generated/grafana:/etc/grafana/provisioning
+    depends_on:
+      config-processor:
+        condition: service_completed_successfully
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+    networks:
+      - food-delivery-network
+  
+  # ==========================================
+  # 6. LOKI (Sử dụng biến môi trường hệ thống cho file cấu hình)
+  # ==========================================
+  loki:
+    image: grafana/loki:2.8.2
+    container_name: food-delivery-loki
+    ports:
+      - "${LOKI_PORT}:${LOKI_PORT}"
+    volumes:
+      - ./yml-generated/loki:/etc/loki
+    environment:
+      - LOKI_PORT=${LOKI_PORT} # Đưa biến môi trường vào đây để cơ chế nội bộ tự giải nén (Không cần -config.expand-env nữa)
+    depends_on:
+      config-processor:
+        condition: service_completed_successfully
+    networks:
+      - food-delivery-network
+
+  # ==========================================
+  # 7. PROMTAIL
+  # ==========================================
+  promtail:
+    image: grafana/promtail:2.8.2
+    container_name: food-delivery-promtail
+    volumes:
+      - ./yml-generated/promtail:/etc/promtail
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      config-processor:
+        condition: service_completed_successfully
+      loki:
+        condition: service_started
     networks:
       - food-delivery-network
 
