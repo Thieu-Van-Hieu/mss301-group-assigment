@@ -27,7 +27,6 @@ public class DeliveryRepositoryImpl implements DeliveryRepository {
 
     @Override
     public void save(DeliveryAggregate deliveryAggregate) {
-        DeliveryEntity deliveryEntity = deliveryAggregate.getDelivery();
-        jpaDeliveryRepository.save(deliveryEntity);
+
     }
 }
