@@ -9,3 +9,15 @@ spring:
   flyway:
     enabled: ${DELIVERY_FLYWAY_ENABLED:true}
     baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    consumer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages: "mss301.se1911.group.assignment.deliveryservice.infrastructure.messaging.kafka.event"
+
+app:
+  kafka:
+    topics:
+      user-onboarding: ${KAFKA_TOPIC_USER_ONBOARDING:user-onboarding-topic}
