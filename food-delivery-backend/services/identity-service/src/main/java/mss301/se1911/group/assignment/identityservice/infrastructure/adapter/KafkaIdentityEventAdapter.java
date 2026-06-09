@@ -1,7 +1,7 @@
 package mss301.se1911.group.assignment.identityservice.infrastructure.adapter;
 
 import lombok.RequiredArgsConstructor;
-import mss301.se1911.group.assignment.identityservice.domain.event.UserCreatedEvent;
+import mss301.se1911.group.assignment.commonevents.identity.UserCreatedEvent;
 import mss301.se1911.group.assignment.identityservice.domain.repository.IdentityEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

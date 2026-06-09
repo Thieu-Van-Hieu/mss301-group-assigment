@@ -1,13 +1,16 @@
 package mss301.se1911.group.assignment.identityservice.application.usecase;
 
 import lombok.RequiredArgsConstructor;
+import mss301.se1911.group.assignment.commonevents.identity.UserCreatedEvent;
 import mss301.se1911.group.assignment.identityservice.application.command.RegisterUserCommand;
 import mss301.se1911.group.assignment.identityservice.domain.aggregate.Account;
-import mss301.se1911.group.assignment.identityservice.domain.event.UserCreatedEvent;
 import mss301.se1911.group.assignment.identityservice.domain.repository.IdentityEventPublisher;
 import mss301.se1911.group.assignment.identityservice.domain.repository.IdentityRepository;
 import mss301.se1911.group.assignment.identityservice.domain.vo.AccountId;
 import org.springframework.stereotype.Service;
+
+import java.sql.Timestamp;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,8 @@ public class RegisterUserUseCase {
         // 4. 
         // 2. Tạo Domain Event với các thông tin tối giản chuẩn chỉnh
         UserCreatedEvent event = UserCreatedEvent.builder()
+                .eventId(UUID.randomUUID())
+                .timestamp(new Timestamp(System.currentTimeMillis()))
                 .userId(newAccount.getId().value().toString())
                 .fullName(newAccount.getFullName())
                 .email(newAccount.getEmail())
