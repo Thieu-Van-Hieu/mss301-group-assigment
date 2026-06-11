@@ -1,0 +1,21 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalEnv": [
+        "VITE_PORT_MAIN_AUTH",
+        "VITE_API_GATEWAY_URL"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "dist/**"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        }
+    }
+}

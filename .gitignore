@@ -1,37 +1,114 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# ==============================================================================
+# I. CHIẾN THUẬT QUẢN LÝ DỰ ÁN PHÂN TÁN (BẬT/TẮT ĐƯỜNG DẪN)
+# ==============================================================================
+# 1. Chặn toàn bộ các FILE mặc định ở mọi ngóc ngách để tránh file rác lọt vào
+**/*
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# 2. Cho phép Git đi vào các thư mục quản lý để quét mã nguồn
+!**/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# 3. Giữ lại các file cấu hình cốt lõi ở thư mục gốc tuyệt đối
+!.gitattributes
+!.gitignore
+!README.md
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# ==============================================================================
+# II. ĐỊNH CẤU HÌNH CHO HOÀN TOÀN BACKEND (SPRING BOOT)
+# ==============================================================================
+!**/src/**
+!**/resources/**
+!**/pom.xml
+!**/mvnw
+!**/mvnw.cmd
+!**/.mvn/
+!**/.mvn/wrapper/maven-wrapper.jar
+!**/.mvn/wrapper/maven-wrapper.properties
+!food-delivery-backend/README.md
+!food-delivery-backend/.github/
+!food-delivery-backend/.github/**
+!food-delivery-backend/config-repo/
+!food-delivery-backend/config-repo/**
 
-### VS Code ###
-.vscode/
+# ==============================================================================
+# III. ĐỊNH CẤU HÌNH CHO HOÀN TOÀN DATABASE (SQL Scripts)
+# ==============================================================================
+!food-delivery-database/
+!food-delivery-database/**
+!**/**.sql
 
-### ENV Files ###
-.env*
-!.env.example
+# ==============================================================================
+# IV. ĐỊNH CẤU HÌNH CHO FRONTEND MULTI-MODULE (TURBOREPO + PNPM)
+# ==============================================================================
+# Giữ lại các file cấu hình quản trị hệ thống Monorepo ở thư mục gốc frontend
+!food-delivery-frontend/package.json
+!food-delivery-frontend/turbo.json
+!food-delivery-frontend/pnpm-lock.yaml
+!food-delivery-frontend/pnpm-workspace.yaml
+!food-delivery-frontend/.npmrc
+!food-delivery-frontend/README.md
+
+# Giữ lại toàn bộ code của các Apps con và Packages shared
+!food-delivery-frontend/apps/
+!food-delivery-frontend/apps/**
+!food-delivery-frontend/packages/
+!food-delivery-frontend/packages/**
+
+# Cấu hình cho một số thư viện
+# OpenAPI Generator
+!food-delivery-frontend/openapitools.json
+food-delivery-frontend/**/generated
+
+# ==============================================================================
+# V. ĐỊNH CẤU HÌNH HẠ TẦNG DOCKER & MONITORING
+# ==============================================================================
+!**/docker-compose.yml
+!**/docker-compose.infra.yml
+!**/**.yaml.template
+!**/**.yml.template
+!**/grafana-dashboards/
+!**/grafana-dashboards/**
+
+# ==============================================================================
+# VI. KHU VỰC LOẠI BỎ (DANH SÁCH ĐEN CẤM ĐẨY LÊN GIT)
+# ==============================================================================
+# 1. File rác sinh ra do IDE (IntelliJ, VS Code, Eclipse)
+**/.idea/
+**/.vscode/
+**/*.iml
+**/.classpath
+**/.project
+**/.settings/
+**/.factorypath
+.DS_Store
+
+# 2. Sản phẩm sau khi Build của Backend
+**/target/
+**/bin/
+
+# 3. Thư viện và file tạm của Frontend (Cấm đẩy lên vì cực kỳ nặng)
+**/node_modules/
+**/.pnp
+**/.pnp.js
+**/.turbo/
+**/.vercel/
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/coverage/
+
+# 4. Logs hệ thống và file bảo mật cá nhân
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 5. Các file cấu hình môi trường chứa mật khẩu (Bắt các thành viên tự tạo local)
+# Giữ lại file .env + git-crypt để mã hóa
+!**/.env
+# Nhưng chặn tất cả các key bảo mật
+*.key
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

@@ -22,11 +22,20 @@ public class GatewaySecurityConfig {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable) // Tạm thời tắt CSRF khi chạy local, sẽ bật lại sau
                 .authorizeExchange(exchange -> exchange
-                        // Luồng đăng ký tài khoản mới: Bắt buộc phải MỞ (permitAll) để khách hàng vãng lai bấm đăng ký được
-                        .pathMatchers("/api/v1/customers/register").permitAll()
+                        .pathMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .pathMatchers(
+                                // Luồng đăng ký tài khoản mới: Bắt buộc phải MỞ (permitAll) để khách hàng vãng lai bấm đăng ký được
+                                "/api/v1/auth/register",
+                                // Mọi API liên quan đến xem/sửa cấu hình hệ thống (Actuator) cũng mở cho Prometheus check tải
+                                "/actuator/**",
+                                // Mọi API liên quan đến swagger-ui
+                                "swagger-ui.html",
+                                "webjars/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/api/v1/auth/v3/api-docs/**"
+                        )
+                        .permitAll()
 
-                        // Mọi API liên quan đến xem/sửa cấu hình hệ thống (Actuator) cũng mở cho Prometheus check tải
-                        .pathMatchers("/actuator/**").permitAll()
 
                         // Các API còn lại (Đặt hàng, giao hàng, ví tiền...) bắt buộc phải có Token hợp lệ mới cho qua
                         .anyExchange().authenticated()
