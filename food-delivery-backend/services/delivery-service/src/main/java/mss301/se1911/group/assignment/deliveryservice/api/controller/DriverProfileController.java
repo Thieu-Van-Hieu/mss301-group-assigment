@@ -62,13 +62,13 @@ public class DriverProfileController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<DriverSelfProfileResponse> getMyProfile(@RequestHeader("X-Driver-Id") UUID driverId) {
+    public ResponseEntity<DriverSelfProfileResponse> getMyProfile(@RequestHeader("X-User-Id") UUID driverId) {
         DriverSelfProfileResponse response = getDriverSelfProfileUseCase.execute(driverId);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<String> deleteMyAccount(@RequestHeader("X-Driver-Id") UUID driverId) {
+    public ResponseEntity<String> deleteMyAccount(@RequestHeader("X-User-Id") UUID driverId) {
         deactivateDriverSelfUseCase.execute(driverId);
         return ResponseEntity.ok("Tài khoản của bạn đã được đóng thành công. Hẹn gặp lại!");
     }
