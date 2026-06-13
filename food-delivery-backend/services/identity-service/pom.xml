@@ -72,6 +72,9 @@
 			<groupId>mss301.se1911.group.assignment</groupId>
 			<artifactId>common-client</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>mss301.se1911.group.assignment</groupId>
+			<artifactId>common-feign</artifactId>
 		</dependency>
 	</dependencies>
 
