@@ -23,6 +23,7 @@
 		<module>shared/common-events</module>
 		<module>shared/common-security</module>
 		<module>shared/common-web</module>
+		<module>shared/common-client</module>
 		<module>shared/common-feign</module>
 	</modules>
 
@@ -119,6 +120,12 @@
 			<dependency>
 				<groupId>mss301.se1911.group.assignment</groupId>
 				<artifactId>common-web</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>mss301.se1911.group.assignment</groupId>
+				<artifactId>common-client</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
