@@ -1,6 +1,8 @@
 package mss301.se1911.group.assignment.identityservice.api.controller;
 
 import mss301.se1911.group.assignment.identityservice.api.dto.UserRegisterRequest;
+import lombok.RequiredArgsConstructor;
+import mss301.se1911.group.assignment.identityservice.api.dto.request.UserRegisterRequest;
 import mss301.se1911.group.assignment.identityservice.application.command.RegisterUserCommand;
 import mss301.se1911.group.assignment.identityservice.application.usecase.RegisterUserUseCase;
 import mss301.se1911.group.assignment.identityservice.domain.aggregate.Account;
