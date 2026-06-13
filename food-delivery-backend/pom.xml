@@ -23,6 +23,7 @@
 		<module>shared/common-events</module>
 		<module>shared/common-security</module>
 		<module>shared/common-web</module>
+		<module>shared/common-feign</module>
 	</modules>
 
 	<properties>
@@ -113,6 +114,30 @@
 				<groupId>org.redisson</groupId>
 				<artifactId>redisson-spring-boot-starter</artifactId>
 				<version>${redisson.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>mss301.se1911.group.assignment</groupId>
+				<artifactId>common-web</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>mss301.se1911.group.assignment</groupId>
+				<artifactId>common-feign</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>mss301.se1911.group.assignment</groupId>
+				<artifactId>common-security</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>mss301.se1911.group.assignment</groupId>
+				<artifactId>common-events</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
