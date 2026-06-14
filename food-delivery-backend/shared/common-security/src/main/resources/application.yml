@@ -1,6 +1,3 @@
 spring:
   application:
     name: common-security
-   
-server:
-  port: 8090
