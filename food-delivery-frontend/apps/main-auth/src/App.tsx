@@ -1,5 +1,5 @@
-import AppRoutes from "./routes/AppRoutes";
 import {Toaster} from "sonner";
+import {AppRoutes} from "./routes/AppRoutes.tsx";
 
 export default function App() {
 	return (
