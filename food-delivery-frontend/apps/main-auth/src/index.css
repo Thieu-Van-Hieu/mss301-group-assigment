@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+    /* 🌟 Hệ màu Pastel Food Delivery: Dịu mát, sang trọng, không chói */
+    --color-brand-light: #fdf6f0;  /* Nền cam sữa pastel siêu nhẹ */
+    --color-brand: #f07865;        /* Cam san hô pastel (Dịu, ấm áp, kích thích vị giác vừa đủ) */
+    --color-brand-dark: #d45d4b;   /* Tông trầm hơn dùng cho trạng thái Hover nút bấm */
+    --color-bg-main: #f9f8f6;      /* Nền xám kem (Off-white) chống mỏi mắt */
+    /* Các màu Pastel bổ sung cho phần Onboarding của các phân hệ */
+    --color-merchant-pastel: #fef3c7; /* Vàng mật ong nhạt cho Quán ăn */
+    --color-shipper-pastel: #e0f2fe;  /* Xanh da trời nhạt cho Tài xế */
+    /* Cấu hình Bo góc mượt mà kiểu Apple */
+    --radius-custom-xl: 1rem;
+    --radius-custom-2xl: 1.5rem;
+}
+
+/* Hiệu ứng mượt mà khi switch giữa các Tab Role */
+@layer utilities {
+    .transition-smooth {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+/* Custom lại scrollbar tinh tế */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+}
