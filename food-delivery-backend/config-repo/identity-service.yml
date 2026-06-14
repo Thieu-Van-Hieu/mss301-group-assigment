@@ -1,5 +1,5 @@
 server:
-  port: ${IDENTITY_SERVICE_PORT:8085}
+  port: ${IDENTITY_SERVICE_PORT:0}
 
 # Cấu hình kết nối sang Keycloak Server dành cho Keycloak Admin Client
 keycloak:
