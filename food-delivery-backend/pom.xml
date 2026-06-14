@@ -35,7 +35,7 @@
 		<spring-boot.version>3.5.14</spring-boot.version>
 		<lombok.version>1.18.46</lombok.version>
 		<lombok-mapstruct-binding.version>0.2.0
-		</lombok-mapstruct-binding.version> <!-- FIXED: Bổ sung version binding -->
+		</lombok-mapstruct-binding.version>
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
 		<spring-cloud-config.version>4.3.3</spring-cloud-config.version>
 		<jjwt.version>0.12.5</jjwt.version>
@@ -43,7 +43,7 @@
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 		<redisson.version>3.45.0</redisson.version>
-		<springdoc.version>2.5.0</springdoc.version>
+		<springdoc.version>2.8.5</springdoc.version>
 	</properties>
 
 	<dependencies>
@@ -51,7 +51,7 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>${lombok.version}
-			</version> <!-- FIXED: Điền version cụ thể do không dùng thẻ parent spring-boot -->
+			</version>
 			<optional>true</optional>
 		</dependency>
 	</dependencies>
@@ -82,7 +82,7 @@
 
 			<dependency>
 				<groupId>org.springdoc</groupId>
-				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+				<artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
 				<version>${springdoc.version}</version>
 			</dependency>
 			<dependency>
