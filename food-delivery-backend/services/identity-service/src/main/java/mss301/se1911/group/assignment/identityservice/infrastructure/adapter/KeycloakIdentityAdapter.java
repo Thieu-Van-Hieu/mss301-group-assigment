@@ -6,9 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import mss301.se1911.group.assignment.commonclient.exceptioin.ErrorTranslator;
 import mss301.se1911.group.assignment.commonclient.translator.ErrorTranslationContext;
 import mss301.se1911.group.assignment.commonclient.translator.ErrorTranslationExecutor;
+import mss301.se1911.group.assignment.commonsecurity.dto.response.TokenResponse;
+import mss301.se1911.group.assignment.commonsecurity.dto.response.UserValidateResponse;
 import mss301.se1911.group.assignment.identityservice.api.dto.response.KeycloakErrorResponse;
 import mss301.se1911.group.assignment.identityservice.domain.aggregate.Account;
+import mss301.se1911.group.assignment.identityservice.domain.exception.InvalidTokenException;
 import mss301.se1911.group.assignment.identityservice.domain.repository.IdentityRepository;
+import mss301.se1911.group.assignment.identityservice.infrastructure.client.keycloak.KeycloakAuthClient;
 import mss301.se1911.group.assignment.identityservice.infrastructure.mapper.KeycloakAccountMapper;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
@@ -21,7 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -30,10 +36,17 @@ public class KeycloakIdentityAdapter implements IdentityRepository {
 
     private final Keycloak keycloak;
     private final KeycloakAccountMapper accountMapper;
+    private final KeycloakAuthClient keycloakAuthClient;
     private final List<ErrorTranslator<KeycloakErrorResponse>> errorTranslators;
 
     @Value("${keycloak.realm}")
     private String realm;
+
+    @Value("${keycloak.client-id}")
+    private String clientId;
+
+    @Value("${keycloak.client-secret}")
+    private String clientSecret;
 
     @Override
     public String create(Account account, String rawPassword) {
@@ -77,7 +90,44 @@ public class KeycloakIdentityAdapter implements IdentityRepository {
             }
 
             return userId;
-
         }
+    }
+
+    @Override
+    public TokenResponse exchangeCode(String code, String redirectUri) {
+        Map<String, String> formData = new HashMap<>();
+        formData.put("grant_type", "authorization_code");
+        formData.put("code", code);
+        formData.put("redirect_uri", redirectUri);
+        formData.put("client_id", clientId);
+        formData.put("client_secret", clientSecret);
+
+        return keycloakAuthClient.tokenEndpoint(realm, formData);
+    }
+
+    @Override
+    public UserValidateResponse introspectToken(String token) {
+        Map<String, String> formData = new HashMap<>();
+        formData.put("token", token);
+        formData.put("client_id", clientId);
+        formData.put("client_secret", clientSecret);
+
+        UserValidateResponse userValidateResponse = keycloakAuthClient.introspectEndpoint(realm, formData);
+        if (userValidateResponse == null || !userValidateResponse.isActive()) {
+            throw new InvalidTokenException("Xác thực thất bại: Token không hợp lệ hoặc đã hết hạn.");
+        }
+        userValidateResponse.flattenData();
+        return userValidateResponse;
+    }
+
+    @Override
+    public TokenResponse refreshToken(String refreshToken) {
+        Map<String, String> formData = new HashMap<>();
+        formData.put("grant_type", "refresh_token");
+        formData.put("refresh_token", refreshToken);
+        formData.put("client_id", clientId);
+        formData.put("client_secret", clientSecret);
+
+        return keycloakAuthClient.refreshEndpoint(realm, formData);
     }
 }
