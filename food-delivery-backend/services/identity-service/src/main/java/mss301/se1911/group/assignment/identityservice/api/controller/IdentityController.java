@@ -7,14 +7,12 @@ import mss301.se1911.group.assignment.commonsecurity.dto.request.RefreshTokenReq
 import mss301.se1911.group.assignment.commonsecurity.dto.response.TokenResponse;
 import mss301.se1911.group.assignment.commonsecurity.dto.response.UserValidateResponse;
 import mss301.se1911.group.assignment.identityservice.api.dto.request.UserRegisterRequest;
+import mss301.se1911.group.assignment.identityservice.api.dto.response.LoginUrlResponse;
 import mss301.se1911.group.assignment.identityservice.application.command.RegisterUserCommand;
 import mss301.se1911.group.assignment.identityservice.application.query.ExchangeCodeQuery;
 import mss301.se1911.group.assignment.identityservice.application.query.RefreshTokenQuery;
 import mss301.se1911.group.assignment.identityservice.application.query.ValidateTokenQuery;
-import mss301.se1911.group.assignment.identityservice.application.usecase.ExchangeCodeUseCase;
-import mss301.se1911.group.assignment.identityservice.application.usecase.RefreshTokenUseCase;
-import mss301.se1911.group.assignment.identityservice.application.usecase.RegisterUserUseCase;
-import mss301.se1911.group.assignment.identityservice.application.usecase.ValidateTokenUseCase;
+import mss301.se1911.group.assignment.identityservice.application.usecase.*;
 import mss301.se1911.group.assignment.identityservice.domain.aggregate.Account;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +28,12 @@ public class IdentityController {
     private final ExchangeCodeUseCase exchangeCodeUseCase;
     private final ValidateTokenUseCase validateTokenUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
+    private final GetLoginUrlUseCase getLoginUrlUseCase;
+
+    @GetMapping("/login-url")
+    public ResponseEntity<LoginUrlResponse> getLoginUrl() {
+        return ResponseEntity.ok(getLoginUrlUseCase.execute());
+    }
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody UserRegisterRequest request) {
