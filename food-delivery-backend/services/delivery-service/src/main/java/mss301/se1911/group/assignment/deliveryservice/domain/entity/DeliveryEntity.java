@@ -56,6 +56,18 @@ public class DeliveryEntity {
     @Column(name = "reason_failed", columnDefinition = "TEXT")
     private String reasonFailed;
 
+    @Column(name = "pickup_lat", precision = 10, scale = 8)
+    private BigDecimal pickupLat;
+
+    @Column(name = "pickup_lng", precision = 11, scale = 8)
+    private BigDecimal pickupLng;
+
+    @Column(name = "dropoff_lat", precision = 10, scale = 8)
+    private BigDecimal dropoffLat;
+
+    @Column(name = "dropoff_lng", precision = 11, scale = 8)
+    private BigDecimal dropoffLng;
+
     @Column(name = "created_at", updatable = false)
     private ZonedDateTime createdAt;
 }

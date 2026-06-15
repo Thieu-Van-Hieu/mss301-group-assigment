@@ -6,6 +6,7 @@ import mss301.se1911.group.assignment.deliveryservice.domain.entity.DeliveryEnti
 import mss301.se1911.group.assignment.deliveryservice.domain.entity.DriverProfileEntity;
 import mss301.se1911.group.assignment.deliveryservice.domain.enums.DeliveryStatus;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -16,7 +17,33 @@ public class DeliveryAggregate {
     private final DeliveryEntity rootEntity;
 
     /**
-     * Trạng thái 1: Hệ thống gán đơn cho 1 tài xế tiềm năng (Matching Engine gọi)
+     * 1. CREATE: Factory Method để khởi tạo chuyến giao hàng mới từ Order-Service
+     */
+    public static DeliveryAggregate createNewDelivery(
+            UUID orderId, String pickupAddress, BigDecimal pickupLat, BigDecimal pickupLng,
+            String dropoffAddress, BigDecimal dropoffLat, BigDecimal dropoffLng,
+            BigDecimal codAmount, BigDecimal deliveryFee) {
+
+        DeliveryEntity entity = DeliveryEntity.builder()
+                .id(UUID.randomUUID()) // Hoặc dùng ID từ hệ thống tạo ID phân tán
+                .orderId(orderId)
+                .pickupAddress(pickupAddress)
+                .pickupLat(pickupLat)
+                .pickupLng(pickupLng)
+                .dropoffAddress(dropoffAddress)
+                .dropoffLat(dropoffLat)
+                .dropoffLng(dropoffLng)
+                .codAmount(codAmount)
+                .deliveryFee(deliveryFee)
+                .status(DeliveryStatus.READY_TO_MATCH) // Vừa tạo ra là sẵn sàng để quăng vào bể cho tài xế
+                .createdAt(ZonedDateTime.now())
+                .build();
+
+        return new DeliveryAggregate(entity);
+    }
+
+    /**
+     * 2. HỆ THỐNG GÁN ĐƠN (Matching Engine chỉ định 1 tài xế)
      */
     public void assignDriver(DriverProfileEntity driverEntity) {
         if (this.rootEntity.getStatus() != DeliveryStatus.READY_TO_MATCH ) {
@@ -28,15 +55,15 @@ public class DeliveryAggregate {
     }
 
     /**
-     * Trạng thái 2 (Áp dụng Luật SLA 30s): Tài xế từ chối hoặc hết 30s không phản hồi
+     * 3. XỬ LÝ TỪ CHỐI / TIMEOUT: Gỡ tài xế ra để trả lại bể đơn
+     * (Lưu ý: Việc thêm driverId vào Redis Blacklist sẽ do UseCase bên ngoài đảm nhiệm)
      */
     public void timeoutOrRejectAssignment() {
         if (this.rootEntity.getStatus() != DeliveryStatus.ASSIGNED) {
-            throw new IllegalStateException("Đơn hàng không ở trạng thái đang gán để có thể hủy bỏ!");
+            throw new IllegalStateException("Đơn hàng không ở trạng thái đang gán để có thể hủy/từ chối!");
         }
-
-        this.rootEntity.setDriver(null); // Gỡ tài xế ra khỏi đơn
-        this.rootEntity.setStatus(DeliveryStatus.READY_TO_MATCH); // Trả về bể đơn để quét người khác
+        this.rootEntity.setDriver(null);
+        this.rootEntity.setStatus(DeliveryStatus.READY_TO_MATCH);
     }
 
     /**
@@ -87,15 +114,28 @@ public class DeliveryAggregate {
     }
 
     /**
-     * Trạng thái thất bại: HỦY CHUYẾN ĐI (Hệ thống hoặc nhà hàng hủy)
+     * 8. KHÁCH HÀNG HỦY ĐƠN (Chỉ được hủy khi xế chưa lấy hàng khỏi quán)
      */
-    public void failDelivery(String reason) {
-        // Không cho phép hủy khi đơn đã hoàn thành thành công
-        if (this.rootEntity.getStatus() == DeliveryStatus.DELIVERED) {
-            throw new IllegalStateException("Đơn hàng đã hoàn thành, không thể hủy!");
+    public void cancelByCustomer(String reason) {
+        DeliveryStatus currentStatus = this.rootEntity.getStatus();
+        if (currentStatus == DeliveryStatus.PICKED_UP || currentStatus == DeliveryStatus.DELIVERED) {
+            throw new IllegalStateException("Nhà hàng đã chuẩn bị xong hoặc tài xế đang giao, không thể hủy!");
         }
-
         this.rootEntity.setStatus(DeliveryStatus.FAILED);
-        this.rootEntity.setReasonFailed(reason);
+        this.rootEntity.setReasonFailed("CUSTOMER_CANCELLED: " + reason);
+    }
+
+    /**
+     * 9. TÀI XẾ BÁO SỰ CỐ / HỦY CHUYẾN GIỮA ĐƯỜNG (Xe hỏng, tai nạn, khách boom hàng...)
+     */
+    public void cancelByDriver(String reason) {
+        DeliveryStatus currentStatus = this.rootEntity.getStatus();
+        if (currentStatus != DeliveryStatus.ACCEPTED &&
+                currentStatus != DeliveryStatus.ARRIVED_AT_RESTAURANT &&
+                currentStatus != DeliveryStatus.PICKED_UP) {
+            throw new IllegalStateException("Trạng thái hiện tại không hợp lệ để tài xế báo hủy chuyến!");
+        }
+        this.rootEntity.setStatus(DeliveryStatus.FAILED);
+        this.rootEntity.setReasonFailed("DRIVER_FAILED: " + reason);
     }
 }
