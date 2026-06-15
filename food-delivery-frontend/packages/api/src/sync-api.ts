@@ -59,8 +59,7 @@ async function generateAllApis(): Promise<void> {
 				`-i ${fullOpenApiUrl} ` +
 				`-g typescript-axios ` +
 				`-o "${targetFolder}" ` +
-				`--skip-validate-spec` +
-				`--additional-properties=modelPropertyNaming=camelCase`;
+				`--skip-validate-spec`;
 
 			execSync(command, {stdio: "inherit"});
 		}

@@ -1,6 +1,7 @@
 package mss301.se1911.group.assignment.commonsecurity.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,7 @@ import java.util.List;
 public class UserValidateResponse {
 
     private boolean active;
-   
+
     @JsonProperty("sub")
     private String id;
 
@@ -25,25 +26,31 @@ public class UserValidateResponse {
     private RealmAccess realmAccess;
 
     @JsonProperty("fullName")
-    private List<String> fullNameList;
+    private String fullName;
 
     @JsonProperty("phoneNumber")
-    private List<String> phoneNumberList;
-
-    private String fullName;
     private String phoneNumber;
+
     private List<String> roles;
     private boolean enabled;
+
+    @JsonSetter("fullName")
+    public void setFullNameFromKeycloak(List<String> fullNameList) {
+        if (fullNameList != null && !fullNameList.isEmpty()) {
+            this.fullName = fullNameList.getFirst();
+        }
+    }
+
+    @JsonSetter("phoneNumber")
+    public void setPhoneNumberFromKeycloak(List<String> phoneNumberList) {
+        if (phoneNumberList != null && !phoneNumberList.isEmpty()) {
+            this.phoneNumber = phoneNumberList.getFirst();
+        }
+    }
 
     public void flattenData() {
         if (this.realmAccess != null) {
             this.roles = this.realmAccess.getRoles();
-        }
-        if (this.fullNameList != null && !this.fullNameList.isEmpty()) {
-            this.fullName = this.fullNameList.getFirst();
-        }
-        if (this.phoneNumberList != null && !this.phoneNumberList.isEmpty()) {
-            this.phoneNumber = this.phoneNumberList.getFirst();
         }
     }
 
@@ -52,4 +59,3 @@ public class UserValidateResponse {
         private List<String> roles;
     }
 }
-
