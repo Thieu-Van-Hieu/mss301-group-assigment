@@ -1,5 +1,5 @@
 server:
-  port: ${IDENTITY_SERVICE_PORT:8085}
+  port: ${IDENTITY_SERVICE_PORT:0}
 
 # Cấu hình kết nối sang Keycloak Server dành cho Keycloak Admin Client
 keycloak:
@@ -9,6 +9,8 @@ keycloak:
   admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
   admin-username: ${KEYCLOAK_ADMIN_USER:admin}
   admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+  client-id: ${KEYCLOAK_IDENTITY_SERVICE_CLIENT_ID:identity-service-client}
+  client-secret: ${KEYCLOAK_IDENTITY_SERVICE_CLIENT_SECRET:identity-service-secret}
 
 spring:
   kafka:
@@ -16,6 +18,17 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 2000 # 2 giây để kết nối mạng
+            readTimeout: 5000    # 5 giây để chờ xử lý xong dữ liệu
+          keycloak-auth-client:
+            url: ${KEYCLOAK_SERVER_URL:http://localhost:8180}
+            connectTimeout: 1000
+            readTimeout: 3000
 
 springdoc:
   api-docs:
@@ -23,7 +36,10 @@ springdoc:
   swagger-ui:
     enabled: false
 
+
 app:
   kafka:
     topics:
       user-onboarding: ${KAFKA_TOPIC_USER_ONBOARDING:user-onboarding-topic}
+  keycloak:
+    frontend-redirect-uri: ${KEYCLOAK_REDIRECT_URI:http://localhost:5000/auth/callback}

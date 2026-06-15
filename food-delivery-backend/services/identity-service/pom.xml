@@ -54,7 +54,27 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mss301.se1911.group.assignment</groupId>
+			<artifactId>common-events</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mss301.se1911.group.assignment</groupId>
+			<artifactId>common-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mss301.se1911.group.assignment</groupId>
+			<artifactId>common-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mss301.se1911.group.assignment</groupId>
+			<artifactId>common-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mss301.se1911.group.assignment</groupId>
+			<artifactId>common-feign</artifactId>
 		</dependency>
 	</dependencies>
 

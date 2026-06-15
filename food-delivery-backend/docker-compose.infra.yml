@@ -10,10 +10,13 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HTTP_PORT: ${KEYCLOAK_PORT}
+      KC_THEME_CACHE_THEMES: "false"
+      KC_THEME_CACHE_TEMPLATES: "false"
     ports:
       - "${KEYCLOAK_PORT}:${KEYCLOAK_PORT}"
     volumes:
       - keycloak_data:/opt/keycloak/data
+      - ${KEYCLOAK_THEME_PATH}/keycloak-theme-for-kc-22-to-25.jar:/opt/keycloak/providers/my-theme.jar
     networks:
       - food-delivery-network
 
