@@ -1,7 +1,7 @@
 package mss301.se1911.group.assignment.orderservice.infrastructure.persistence;
 
 import org.springframework.stereotype.Repository;
-import mss301.se1911.group.assignment.orderservice.domain.model.Order;
+import mss301.se1911.group.assignment.orderservice.domain.aggregate.OrderAggregate;
 import mss301.se1911.group.assignment.orderservice.domain.repository.OrderRepository;
 
 import java.util.ArrayList;
@@ -14,10 +14,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Repository
 public class InMemoryOrderRepository implements OrderRepository {
 
-    private final Map<UUID, Order> store = new ConcurrentHashMap<>();
+    private final Map<UUID, OrderAggregate> store = new ConcurrentHashMap<>();
 
     @Override
-    public Order save(Order order) {
+    public OrderAggregate save(OrderAggregate order) {
         if (order == null || order.getId() == null) {
             throw new IllegalArgumentException("Order and order ID must not be null");
         }
@@ -26,7 +26,7 @@ public class InMemoryOrderRepository implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findById(UUID id) {
+    public Optional<OrderAggregate> findById(UUID id) {
         if (id == null) {
             return Optional.empty();
         }
@@ -34,7 +34,7 @@ public class InMemoryOrderRepository implements OrderRepository {
     }
 
     @Override
-    public List<Order> findAll() {
+    public List<OrderAggregate> findAll() {
         return new ArrayList<>(store.values());
     }
 }

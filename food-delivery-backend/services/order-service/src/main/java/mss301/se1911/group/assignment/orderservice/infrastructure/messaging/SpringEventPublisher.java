@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
-import mss301.se1911.group.assignment.orderservice.application.ports.out.OrderEventPublisher;
-import mss301.se1911.group.assignment.orderservice.domain.event.OrderEvent;
+import mss301.se1911.group.assignment.orderservice.application.usecase.OrderEventPublisher;
+import mss301.se1911.group.assignment.orderservice.domain.aggregate.OrderEvent;
 
 @Slf4j
 @Component
