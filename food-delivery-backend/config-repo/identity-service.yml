@@ -43,3 +43,4 @@ app:
       user-onboarding: ${KAFKA_TOPIC_USER_ONBOARDING:user-onboarding-topic}
   keycloak:
     frontend-redirect-uri: ${KEYCLOAK_REDIRECT_URI:http://localhost:5000/auth/callback}
+    redirect-server-url: ${KEYCLOAK_REDIRECT_SERVER_URL:http://localhost:8180}

@@ -13,4 +13,4 @@ spring: # Cấu hình các thành phần lõi thuộc hệ sinh thái của fram
       server:
         native:
           # ĐƯỜNG DẪN ĐỘNG: Ghép từ biến gốc dự án ${CONFIG_REPO_ROOT} và tên thư mục chứa cấu hình ${CONFIG_REPO_DIR}
-          search-locations: file:${CONFIG_REPO_ROOT:./food-delivery-backend}/${CONFIG_REPO_DIR:config-repo}/
+          search-locations: ${SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS:file:./food-delivery-backend/config-repo/}

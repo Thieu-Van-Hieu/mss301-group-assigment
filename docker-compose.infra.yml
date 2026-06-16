@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # ==========================================
   # 1. KEYCLOAK SERVER
@@ -5,7 +7,9 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
     container_name: food-delivery-keycloak
-    command: start-dev
+    command: start-dev --import-realm
+    env_file:
+      - .env.infra # 🚀 Ép container đọc file .env.infra tại gốc
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
@@ -17,6 +21,7 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ${KEYCLOAK_THEME_PATH}/keycloak-theme-for-kc-22-to-25.jar:/opt/keycloak/providers/my-theme.jar
+      - ./development-template/keycloak-realm/realm-export.json:/opt/keycloak/data/import/realm-export.json
     networks:
       - food-delivery-network
 
@@ -26,6 +31,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: food-delivery-kafka
+    env_file:
+      - .env.infra # 🚀 Ép container đọc file .env.infra tại gốc
     ports:
       - "${KAFKA_PORT_EXTERNAL}:${KAFKA_PORT_EXTERNAL}"
     environment:
@@ -33,7 +40,7 @@ services:
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '${KAFKA_NODE_ID}@kafka:${KAFKA_PORT_CONTROLLER}'
       KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:${KAFKA_PORT_EXTERNAL},CONTROLLER://0.0.0.0:${KAFKA_PORT_CONTROLLER},PLAINTEXT_HOST://0.0.0.0:${KAFKA_PORT_INTERNAL}'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:${KAFKA_PORT_EXTERNAL},PLAINTEXT_HOST://kafka:${KAFKA_PORT_INTERNAL}'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:${KAFKA_PORT_EXTERNAL},PLAINTEXT_HOST://kafka:${KAFKA_PORT_INTERNAL}'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       CLUSTER_ID: ${KAFKA_CLUSTER_ID}
@@ -43,11 +50,13 @@ services:
       - food-delivery-network
   
   # ==========================================
-  # 3. CONFIG PROCESSOR (Đổi tên file đầu ra về chuẩn mặc định)
+  # 3. CONFIG PROCESSOR
   # ==========================================
   config-processor:
     image: alpine:3.18
     container_name: food-delivery-config-processor
+    env_file:
+      - .env.infra # 🚀 Ép container đọc file .env.infra tại gốc
     volumes:
       - ./:/config
     environment:
@@ -62,27 +71,17 @@ services:
       - "-c"
       - |
         apk add --no-cache gettext > /dev/null
-        
-        # 1. Cấu hình Prometheus mặc định
         mkdir -p /config/yml-generated/prometheus
-        envsubst < /config/yml-template/prometheus/prometheus.yml.template > /config/yml-generated/prometheus/prometheus.yml
-        
-        # 2. Cấu hình Promtail mặc định (Tên config.yml)
+        envsubst < /config/development-template/yml-template/prometheus/prometheus.yml.template > /config/yml-generated/prometheus/prometheus.yml
         mkdir -p /config/yml-generated/promtail
-        envsubst < /config/yml-template/promtail/config.yml.template > /config/yml-generated/promtail/config.yml
-        
-        # 3. Cấu hình Loki mặc định (Tên local-config.yaml)
+        envsubst < /config/development-template/yml-template/promtail/config.yml.template > /config/yml-generated/promtail/config.yml
         mkdir -p /config/yml-generated/loki
-        envsubst < /config/yml-template/loki/local-config.yml.template > /config/yml-generated/loki/local-config.yaml
-        
-        # 4. Cấu hình Grafana Provisioning tự động
+        envsubst < /config/development-template/yml-template/loki/local-config.yml.template > /config/yml-generated/loki/local-config.yaml
         mkdir -p /config/yml-generated/grafana/datasources
-        envsubst < /config/yml-template/grafana/datasources.yml.template > /config/yml-generated/grafana/datasources/datasources.yaml
-        
+        envsubst < /config/development-template/yml-template/grafana/datasources.yml.template > /config/yml-generated/grafana/datasources/datasources.yaml
         mkdir -p /config/yml-generated/grafana/dashboards/json
-        envsubst < /config/yml-template/grafana/dashboards.yml.template > /config/yml-generated/grafana/dashboards/dashboards.yaml
+        envsubst < /config/development-template/yml-template/grafana/dashboards.yml.template > /config/yml-generated/grafana/dashboards/dashboards.yaml
         cp /config/grafana-dashboards/services-monitor-dashboard.json /config/yml-generated/grafana/dashboards/json/services-monitor-dashboard.json
-        
         echo "SUCCESS: Đã tạo cây cấu hình chuẩn không cần dùng lệnh command bổ trợ!"
     networks:
       - food-delivery-network
@@ -93,10 +92,11 @@ services:
   prometheus:
     image: prom/prometheus:v2.45.0
     container_name: food-delivery-prometheus
+    env_file:
+      - .env.infra
     ports:
       - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
     volumes:
-      # Đè đè trực tiếp vào thư mục gốc mặc định của Prometheus
       - ./yml-generated/prometheus:/etc/prometheus
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -112,12 +112,13 @@ services:
   grafana:
     image: grafana/grafana:10.0.0
     container_name: food-delivery-grafana
+    env_file:
+      - .env.infra
     ports:
       - "${GRAFANA_PORT}:${GRAFANA_PORT}"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     volumes:
-      # Mount toàn bộ cấu trúc thư mục chứa cả datasources và dashboards vào thẳng vùng tự động quét của Grafana
       - ./yml-generated/grafana:/etc/grafana/provisioning
     depends_on:
       config-processor:
@@ -130,17 +131,19 @@ services:
       - food-delivery-network
   
   # ==========================================
-  # 6. LOKI (Sử dụng biến môi trường hệ thống cho file cấu hình)
+  # 6. LOKI
   # ==========================================
   loki:
     image: grafana/loki:2.8.2
     container_name: food-delivery-loki
+    env_file:
+      - .env.infra
     ports:
       - "${LOKI_PORT}:${LOKI_PORT}"
     volumes:
       - ./yml-generated/loki:/etc/loki
     environment:
-      - LOKI_PORT=${LOKI_PORT} # Đưa biến môi trường vào đây để cơ chế nội bộ tự giải nén (Không cần -config.expand-env nữa)
+      - LOKI_PORT=${LOKI_PORT}
     depends_on:
       config-processor:
         condition: service_completed_successfully
@@ -153,6 +156,8 @@ services:
   promtail:
     image: grafana/promtail:2.8.2
     container_name: food-delivery-promtail
+    env_file:
+      - .env.infra
     volumes:
       - ./yml-generated/promtail:/etc/promtail
       - /var/run/docker.sock:/var/run/docker.sock
@@ -169,4 +174,5 @@ volumes:
 
 networks:
   food-delivery-network:
+    name: food-delivery-network
     driver: bridge

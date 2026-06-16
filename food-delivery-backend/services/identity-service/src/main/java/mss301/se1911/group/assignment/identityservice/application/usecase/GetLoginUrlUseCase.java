@@ -11,9 +11,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class GetLoginUrlUseCase {
-    @Value("${keycloak.server-url}")
-    private String authServerUrl;
-
     @Value("${keycloak.realm}")
     private String realm;
 
@@ -23,6 +20,9 @@ public class GetLoginUrlUseCase {
     @Value("${app.keycloak.frontend-redirect-uri}")
     private String frontendRedirectUri;
 
+    @Value("${app.keycloak.redirect-server-url}")
+    private String redirectServerUrl;
+
     public LoginUrlResponse execute() {
         String state = UUID.randomUUID().toString();
 
@@ -30,7 +30,7 @@ public class GetLoginUrlUseCase {
         // redisTemplate.opsForValue().set("auth:state:" + state, "pending", Duration.ofMinutes(5));
 
         // 2. Xây dựng chuỗi URL
-        String targetUrl = UriComponentsBuilder.fromUriString(authServerUrl)
+        String targetUrl = UriComponentsBuilder.fromUriString(redirectServerUrl)
                 .path("/realms/{realm}/protocol/openid-connect/auth")
                 .queryParam("client_id", clientId)
                 .queryParam("redirect_uri", frontendRedirectUri)
