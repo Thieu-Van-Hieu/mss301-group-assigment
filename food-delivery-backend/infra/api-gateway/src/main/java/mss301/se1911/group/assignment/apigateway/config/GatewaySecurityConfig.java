@@ -1,5 +1,6 @@
 package mss301.se1911.group.assignment.apigateway.config;
 
+import jakarta.ws.rs.HttpMethod;
 import mss301.se1911.group.assignment.commonsecurity.utils.KeycloakRoleConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,27 +21,30 @@ public class GatewaySecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable) // Tạm thời tắt CSRF khi chạy local, sẽ bật lại sau
+                .csrf(ServerHttpSecurity.CsrfSpec::disable) // Tắt CSRF
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // 1. Cho phép tất cả các request OPTIONS (CORS Preflight) đi qua
+                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 2. Mở cổng công khai cho toàn bộ các endpoint Auth (Register, Exchange Code, Refresh...)
+                        .pathMatchers("/api/v1/auth/**").permitAll()
+
+                        // 3. Mở cổng cho hệ thống giám sát Actuator
+                        .pathMatchers("/actuator/**").permitAll()
+
+                        // 4. Sửa lại đường dẫn Swagger UI chuẩn chỉ (Có dấu gạch chéo đầu đường dẫn)
                         .pathMatchers(
-                                // Luồng đăng ký tài khoản mới: Bắt buộc phải MỞ (permitAll) để khách hàng vãng lai bấm đăng ký được
-                                "/api/v1/auth/register",
-                                // Mọi API liên quan đến xem/sửa cấu hình hệ thống (Actuator) cũng mở cho Prometheus check tải
-                                "/actuator/**",
-                                // Mọi API liên quan đến swagger-ui
-                                "swagger-ui.html",
-                                "webjars/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/webjars/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/api/v1/auth/v3/api-docs/**"
-                        )
-                        .permitAll()
+                        ).permitAll()
 
-
-                        // Các API còn lại (Đặt hàng, giao hàng, ví tiền...) bắt buộc phải có Token hợp lệ mới cho qua
+                        // 5. TẤT CẢ CÁC API NGHIỆP VỤ CÒN LẠI (Order, Product...) BẮT BUỘC PHẢI LOGIN
                         .anyExchange().authenticated()
                 )
-                // Khai báo cho Gateway biết nó đóng vai trò là một Resource Server chặn JWT Token
+                // Cấu hình Resource Server giải mã JWT bằng Converter Reactive thuần chủng
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(grantedAuthoritiesExtractor()))
                 );
