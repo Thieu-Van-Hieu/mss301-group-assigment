@@ -1,10 +1,12 @@
 import React, {useState} from "react";
 import {toast} from "sonner";
 import {authApiClient} from "@repo/api";
-import type {UserRegisterRequest} from "@repo/api/generated/identity-service-api";
 import {RoleSelector} from "./RoleSelector.tsx";
 import {AppInput} from "../../../../components/AppInput.tsx";
 import {AppButton} from "../../../../components/AppButton.tsx";
+import {useNavigate} from "react-router-dom";
+import {PATHS} from "../../../../routes/paths.ts";
+import type {UserRegisterRequest} from "@repo/api/generated/identity-service-api";
 
 type RegisterRole = "CUSTOMER" | "MERCHANT" | "SHIPPER";
 
@@ -20,6 +22,7 @@ export const RegisterForm = () => {
 		password: "",
 		confirmPassword: "",
 	});
+	const navigate = useNavigate();
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setFormData({...formData, [e.target.name]: e.target.value});
@@ -45,6 +48,7 @@ export const RegisterForm = () => {
 			if (response.status === 201) {
 				const roleName = role === "CUSTOMER" ? "Khách Hàng" : role === "MERCHANT" ? "Đối Tác" : "Tài Xế";
 				toast.success(`Tạo tài khoản ${roleName} thành công! Vui lòng đăng nhập qua Keycloak.`);
+				navigate(PATHS.LOGIN);
 			}
 		} catch (err) {
 			console.error("Luồng đăng ký thất bại đã được Interceptor xử lý toast dữ liệu:", err);
