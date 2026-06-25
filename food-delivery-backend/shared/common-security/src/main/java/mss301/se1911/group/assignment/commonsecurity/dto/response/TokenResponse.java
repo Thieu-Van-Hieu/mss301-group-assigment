@@ -6,20 +6,20 @@ import lombok.Builder;
 
 @Builder
 public record TokenResponse(
-        @JsonProperty(value = "access_token", access = JsonProperty.Access.WRITE_ONLY)
+        @JsonProperty(value = "access_token")
         @Schema(name = "accessToken", accessMode = Schema.AccessMode.READ_ONLY)
         String accessToken,
 
-        @JsonProperty(value = "refresh_token", access = JsonProperty.Access.WRITE_ONLY)
+        @JsonProperty(value = "refresh_token")
         @Schema(hidden = true)
         String refreshToken,
 
-        @JsonProperty(value = "expires_in", access = JsonProperty.Access.WRITE_ONLY)
+        @JsonProperty(value = "expires_in")
         @Schema(name = "expiresIn", accessMode = Schema.AccessMode.READ_ONLY)
         long expiresIn,
 
         @Schema(hidden = true)
-        @JsonProperty(value = "refresh_expires_in", access = JsonProperty.Access.WRITE_ONLY)
+        @JsonProperty(value = "refresh_expires_in")
         long refreshExpiresIn
 ) {
 }

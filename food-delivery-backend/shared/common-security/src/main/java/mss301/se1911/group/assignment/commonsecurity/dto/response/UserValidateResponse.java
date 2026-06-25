@@ -34,17 +34,26 @@ public class UserValidateResponse {
     private List<String> roles;
     private boolean enabled;
 
+    // Sử dụng Object để chấp nhận cả chuỗi đơn lẫn mảng (đề phòng Keycloak đổi cấu hình)
     @JsonSetter("fullName")
-    public void setFullNameFromKeycloak(List<String> fullNameList) {
-        if (fullNameList != null && !fullNameList.isEmpty()) {
-            this.fullName = fullNameList.getFirst();
+    public void setFullNameFromKeycloak(Object fullNameObj) {
+        if (fullNameObj instanceof List<?> list) {
+            if (!list.isEmpty()) {
+                this.fullName = String.valueOf(list.getFirst());
+            }
+        } else if (fullNameObj != null) {
+            this.fullName = String.valueOf(fullNameObj);
         }
     }
 
     @JsonSetter("phoneNumber")
-    public void setPhoneNumberFromKeycloak(List<String> phoneNumberList) {
-        if (phoneNumberList != null && !phoneNumberList.isEmpty()) {
-            this.phoneNumber = phoneNumberList.getFirst();
+    public void setPhoneNumberFromKeycloak(Object phoneNumberObj) {
+        if (phoneNumberObj instanceof List<?> list) {
+            if (!list.isEmpty()) {
+                this.phoneNumber = String.valueOf(list.getFirst());
+            }
+        } else if (phoneNumberObj != null) {
+            this.phoneNumber = String.valueOf(phoneNumberObj);
         }
     }
 
@@ -52,6 +61,8 @@ public class UserValidateResponse {
         if (this.realmAccess != null) {
             this.roles = this.realmAccess.getRoles();
         }
+        // Gán luôn trạng thái enabled dựa vào trường active từ token Keycloak
+        this.enabled = this.active;
     }
 
     @Data

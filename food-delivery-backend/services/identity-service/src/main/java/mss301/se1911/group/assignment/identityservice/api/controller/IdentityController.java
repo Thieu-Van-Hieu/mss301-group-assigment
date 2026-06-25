@@ -6,6 +6,7 @@ import mss301.se1911.group.assignment.commonsecurity.dto.request.ExchangeCodeReq
 import mss301.se1911.group.assignment.commonsecurity.dto.request.RefreshTokenRequest;
 import mss301.se1911.group.assignment.commonsecurity.dto.response.TokenResponse;
 import mss301.se1911.group.assignment.commonsecurity.dto.response.UserValidateResponse;
+import mss301.se1911.group.assignment.commonsecurity.filter.UserPrincipal;
 import mss301.se1911.group.assignment.identityservice.api.dto.request.UserRegisterRequest;
 import mss301.se1911.group.assignment.identityservice.api.dto.response.LoginUrlResponse;
 import mss301.se1911.group.assignment.identityservice.application.command.RegisterUserCommand;
@@ -16,6 +17,7 @@ import mss301.se1911.group.assignment.identityservice.application.usecase.*;
 import mss301.se1911.group.assignment.identityservice.domain.aggregate.Account;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -33,6 +35,11 @@ public class IdentityController {
     @GetMapping("/login-url")
     public ResponseEntity<LoginUrlResponse> getLoginUrl() {
         return ResponseEntity.ok(getLoginUrlUseCase.execute());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserPrincipal> me(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(userPrincipal);
     }
 
     @PostMapping("/register")
@@ -86,10 +93,27 @@ public class IdentityController {
 
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refreshToken(
-            @RequestBody RefreshTokenRequest refreshTokenRequest) {
+            // TODO: Bỏ việc lấy refresh_token từ body khi không cần test
+            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            @RequestBody RefreshTokenRequest request
+    ) {
+
+        // Kiểm tra xem cookie có tồn tại không trước khi xử lý tiếp
+        if ((refreshToken == null || refreshToken.isBlank()) && (request.refreshToken() == null || request.refreshToken().isBlank())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            // Nếu cookie tồn tại, ưu tiên dùng cookie
+            refreshToken = refreshToken.trim();
+        } else {
+            // Nếu cookie không tồn tại, dùng refresh_token từ body
+            refreshToken = request.refreshToken().trim();
+        }
         RefreshTokenQuery query = RefreshTokenQuery.builder()
-                .refreshToken(refreshTokenRequest.refreshToken())
+                .refreshToken(refreshToken) // 👈 Truyền trực tiếp chuỗi lấy từ cookie vào đây
                 .build();
+
         TokenResponse response = refreshTokenUseCase.execute(query);
         return ResponseEntity.ok(response);
     }
