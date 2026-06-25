@@ -25,6 +25,7 @@
 		<module>shared/common-web</module>
 		<module>shared/common-client</module>
 		<module>shared/common-feign</module>
+		<module>shared/common-constants</module>
 	</modules>
 
 	<properties>
@@ -145,6 +146,12 @@
 			<dependency>
 				<groupId>mss301.se1911.group.assignment</groupId>
 				<artifactId>common-events</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>mss301.se1911.group.assignment</groupId>
+				<artifactId>common-constants</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 		</dependencies>
