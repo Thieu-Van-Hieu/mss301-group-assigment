@@ -1,4 +1,4 @@
-package mss301.se1911.group.assignment.commonsecurity.utils;
+package mss301.se1911.group.assignment.apigateway.utils;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;

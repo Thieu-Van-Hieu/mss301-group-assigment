@@ -16,11 +16,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>mss301.se1911.group.assignment</groupId>
-			<artifactId>common-security</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>

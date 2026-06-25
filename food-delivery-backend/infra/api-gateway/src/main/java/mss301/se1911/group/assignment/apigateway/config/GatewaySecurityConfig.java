@@ -1,7 +1,7 @@
 package mss301.se1911.group.assignment.apigateway.config;
 
 import jakarta.ws.rs.HttpMethod;
-import mss301.se1911.group.assignment.commonsecurity.utils.KeycloakRoleConverter;
+import mss301.se1911.group.assignment.apigateway.utils.KeycloakRoleConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
