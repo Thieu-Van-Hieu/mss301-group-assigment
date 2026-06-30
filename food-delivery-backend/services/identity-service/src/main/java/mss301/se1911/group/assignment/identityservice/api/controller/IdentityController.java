@@ -1,9 +1,10 @@
 package mss301.se1911.group.assignment.identityservice.api.controller;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mss301.se1911.group.assignment.commonsecurity.dto.request.ExchangeCodeRequest;
-import mss301.se1911.group.assignment.commonsecurity.dto.request.RefreshTokenRequest;
 import mss301.se1911.group.assignment.commonsecurity.dto.response.TokenResponse;
 import mss301.se1911.group.assignment.commonsecurity.dto.response.UserValidateResponse;
 import mss301.se1911.group.assignment.commonsecurity.filter.UserPrincipal;
@@ -44,7 +45,6 @@ public class IdentityController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody UserRegisterRequest request) {
-        // Map từ REST DTO sang Application Command để đẩy vào UseCase
         RegisterUserCommand command = new RegisterUserCommand(
                 request.fullName(),
                 request.phoneNumber(),
@@ -61,12 +61,21 @@ public class IdentityController {
 
     @PostMapping("/exchange-code")
     public ResponseEntity<TokenResponse> exchangeCode(
-            @RequestBody ExchangeCodeRequest request) {
+            @RequestBody ExchangeCodeRequest request,
+            HttpServletResponse httpResponse) {
+
         ExchangeCodeQuery query = ExchangeCodeQuery.builder()
                 .code(request.code())
                 .redirectUri(request.redirectUri())
                 .build();
+
         TokenResponse response = exchangeCodeUseCase.execute(query);
+
+        // 🎯 Đính kèm Refresh Token từ Keycloak vào HttpOnly Cookie
+        if (response.refreshToken() != null && !response.refreshToken().isBlank()) {
+            setRefreshCookie(httpResponse, response.refreshToken(), response.refreshExpiresIn());
+        }
+
         return ResponseEntity.ok(response);
     }
 
@@ -76,12 +85,9 @@ public class IdentityController {
 
         String token;
 
-        // Kiểm tra an toàn xem header có hợp lệ và bắt đầu bằng Bearer không (không phân biệt hoa thường)
         if (authHeader != null && authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            // Cắt bỏ 7 ký tự đầu ("Bearer ") và xóa hết khoảng trắng thừa hai đầu
             token = authHeader.substring(7).trim();
         } else {
-            // Nếu không có Bearer hoặc rỗng, gán luôn authHeader ban đầu (hoặc xử lý ném lỗi tùy bạn)
             token = authHeader != null ? authHeader.trim() : "";
         }
 
@@ -90,31 +96,39 @@ public class IdentityController {
         return ResponseEntity.ok(response);
     }
 
-
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refreshToken(
-            // TODO: Bỏ việc lấy refresh_token từ body khi không cần test
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
-            @RequestBody RefreshTokenRequest request
-    ) {
+            HttpServletResponse httpResponse) { // 🎯 Tiêm HttpServletResponse để cập nhật xoay vòng Cookie
 
-        // Kiểm tra xem cookie có tồn tại không trước khi xử lý tiếp
-        if ((refreshToken == null || refreshToken.isBlank()) && (request.refreshToken() == null || request.refreshToken().isBlank())) {
+        // 🎯 1. Nếu F5 hoặc Refresh ngầm mà không mang kèm theo Cookie -> Chặn luôn từ vòng gửi xe bằng 401
+        if (refreshToken == null || refreshToken.isBlank()) {
+            log.warn("⚠️ Yêu cầu làm mới mã thông báo bị từ chối do không tìm thấy Cookie 'refresh_token'.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        if (refreshToken != null && !refreshToken.isBlank()) {
-            // Nếu cookie tồn tại, ưu tiên dùng cookie
-            refreshToken = refreshToken.trim();
-        } else {
-            // Nếu cookie không tồn tại, dùng refresh_token từ body
-            refreshToken = request.refreshToken().trim();
-        }
         RefreshTokenQuery query = RefreshTokenQuery.builder()
-                .refreshToken(refreshToken) // 👈 Truyền trực tiếp chuỗi lấy từ cookie vào đây
+                .refreshToken(refreshToken.trim())
                 .build();
 
         TokenResponse response = refreshTokenUseCase.execute(query);
+
+        // 🎯 2. Đút mã Refresh Token mới (Nếu Keycloak kích hoạt Token Rotation) vào lại Cookie của trình duyệt
+        if (response.refreshToken() != null && !response.refreshToken().isBlank()) {
+            setRefreshCookie(httpResponse, response.refreshToken(), response.refreshExpiresIn());
+        }
+
         return ResponseEntity.ok(response);
+    }
+    /**
+     * Hàm trợ giúp (Helper) cấu hình thông số và đẩy Cookie xuống trình duyệt.
+     */
+    private void setRefreshCookie(HttpServletResponse response, String token, long maxAgeInSeconds) {
+        Cookie cookie = new Cookie("refresh_token", token);
+        cookie.setHttpOnly(true);   // Ngăn chặn JavaScript (XSS) tiếp cận đọc mã token này
+        cookie.setPath("/");       // Cookie có hiệu lực trên toàn cục hệ thống
+        cookie.setSecure(false);   // Đổi thành true nếu chạy thực tế trên môi trường mạng HTTPS 
+        cookie.setMaxAge((int) maxAgeInSeconds); // Thời gian sống đồng bộ với cấu hình từ Keycloak
+        response.addCookie(cookie);
     }
 }
