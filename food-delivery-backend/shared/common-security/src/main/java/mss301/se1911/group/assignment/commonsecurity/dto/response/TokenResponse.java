@@ -1,25 +1,25 @@
 package mss301.se1911.group.assignment.commonsecurity.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @Builder
 public record TokenResponse(
-        @JsonProperty(value = "access_token")
-        @Schema(name = "accessToken", accessMode = Schema.AccessMode.READ_ONLY)
+        @JsonProperty(value = "accessToken")
+        @JsonAlias("access_token")
         String accessToken,
 
-        @JsonProperty(value = "refresh_token")
-        @Schema(hidden = true)
+        @JsonProperty(value = "refreshToken")
+        @JsonAlias("refresh_token")
         String refreshToken,
 
-        @JsonProperty(value = "expires_in")
-        @Schema(name = "expiresIn", accessMode = Schema.AccessMode.READ_ONLY)
+        @JsonProperty(value = "expiresIn")
+        @JsonAlias("expires_in")
         long expiresIn,
 
-        @Schema(hidden = true)
-        @JsonProperty(value = "refresh_expires_in")
+        @JsonProperty(value = "refreshExpiresIn")
+        @JsonAlias("refresh_expires_in")
         long refreshExpiresIn
 ) {
 }
