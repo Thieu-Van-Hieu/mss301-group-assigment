@@ -1,6 +1,7 @@
 import React from "react";
 import {useAuth} from "@repo/auth";
 import {Navigate} from "react-router-dom";
+import {APP_ROUTES} from "@repo/routes";
 
 /**
  * Trang Dashboard / Home Page hiển thị thông tin chi tiết của người dùng hiện tại.
@@ -24,7 +25,7 @@ export const DashboardPage = (): React.JSX.Element => {
 
 	// 2. CHẶN BẢO MẬT: Nếu không có user (chưa đăng nhập), chuyển hướng ngay lập tức về trang login
 	if (!user) {
-		return <Navigate to="/login" replace/>;
+		return <Navigate to={APP_ROUTES.AUTH.children.LOGIN.path} replace/>;
 	}
 
 	// 3. Tính toán thời gian hết hạn của Token để hiển thị ra UI

@@ -2,7 +2,9 @@ import React, {useEffect, useState} from "react";
 import {AuthContext} from "./authContext";
 import {UserInfo} from "@/types";
 import {registerStoreListener, updateAccessTokenGlobal} from "./authStore";
-import {apiClient, authApiClient} from "@repo/api";
+import {authApiClient} from "@repo/api";
+import {APP_ROUTES} from "@repo/routes";
+import {useNavigate} from "react-router-dom";
 
 /**
  * Định nghĩa thuộc tính cấu hình (Props) cho thành phần `AuthProvider`.
@@ -40,6 +42,7 @@ export const AuthProvider = ({children}: AuthProviderProps): React.JSX.Element =
 	const [accessToken, _setTokenState] = useState<string | null>(null);
 	const [user, setUser] = useState<UserInfo | null>(null);
 	const [isInitializing, setIsInitializing] = useState(true);
+	const navigate = useNavigate();
 
 	// Lắng nghe sự thay đổi token từ phía ngoài (Axios Interceptor) đổ về để cập nhật React State
 	useEffect(() => {
@@ -72,12 +75,12 @@ export const AuthProvider = ({children}: AuthProviderProps): React.JSX.Element =
 	 */
 	const logout = async (): Promise<void> => {
 		try {
-			await apiClient.post("/api/v1/auth/logout");
+			await authApiClient.logout();
 		} catch (e) {
 			console.error("Lỗi logout:", e);
 		} finally {
 			setAccessToken(null);
-			window.location.href = "/login";
+			APP_ROUTES.AUTH.children.LOGIN.goTo(navigate);
 		}
 	};
 

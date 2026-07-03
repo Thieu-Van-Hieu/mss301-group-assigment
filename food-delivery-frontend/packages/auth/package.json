@@ -31,10 +31,11 @@
         "typescript-eslint": "^8.60.1"
     },
     "dependencies": {
+        "@repo/api": "workspace:*",
+        "@repo/routes": "workspace:*",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
-        "sonner": "^2.0.7",
-        "@repo/api": "workspace:*",
-        "@repo/routes": "workspace:*"
+        "react-router-dom": "^7.17.0",
+        "sonner": "^2.0.7"
     }
 }
