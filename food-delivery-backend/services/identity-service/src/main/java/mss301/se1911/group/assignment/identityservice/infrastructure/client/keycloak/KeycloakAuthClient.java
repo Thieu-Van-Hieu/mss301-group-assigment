@@ -19,6 +19,13 @@ public interface KeycloakAuthClient {
             value = "/realms/{realm}/protocol/openid-connect/token",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
+    @ErrorMapping(
+            status = 400,
+            errorKey = "invalid_grant",
+            businessStatus = HttpStatus.BAD_REQUEST,
+            errorCode = "TOKEN_NOT_ACTIVE",
+            message = "Phiên làm việc (Refresh Token) đã hết hạn hoặc đã được sử dụng."
+    )
     TokenResponse tokenEndpoint(
             @PathVariable("realm") String realm,
             Map<String, ?> formData
@@ -27,6 +34,13 @@ public interface KeycloakAuthClient {
     @PostMapping(
             value = "/realms/{realm}/protocol/openid-connect/token/introspect",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+    )
+    @ErrorMapping(
+            status = 400,
+            errorKey = "invalid_grant",
+            businessStatus = HttpStatus.BAD_REQUEST,
+            errorCode = "TOKEN_NOT_ACTIVE",
+            message = "Phiên làm việc (Refresh Token) đã hết hạn hoặc đã được sử dụng."
     )
     UserValidateResponse introspectEndpoint(
             @PathVariable("realm") String realm,
@@ -45,6 +59,22 @@ public interface KeycloakAuthClient {
             message = "Phiên làm việc (Refresh Token) đã hết hạn hoặc đã được sử dụng."
     )
     TokenResponse refreshEndpoint(
+            @PathVariable("realm") String realm,
+            Map<String, ?> formData
+    );
+
+    @PostMapping(
+            value = "/realms/{realm}/protocol/openid-connect/logout",
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+    )
+    @ErrorMapping(
+            status = 400,
+            errorKey = "invalid_grant",
+            businessStatus = HttpStatus.BAD_REQUEST,
+            errorCode = "LOGOUT_FAILED",
+            message = "Đăng xuất thất bại do Token không hợp lệ hoặc đã hết hạn."
+    )
+    void logoutEndpoint(
             @PathVariable("realm") String realm,
             Map<String, ?> formData
     );

@@ -12,4 +12,6 @@ public interface IdentityRepository {
     UserValidateResponse introspectToken(String token);
 
     TokenResponse refreshToken(String refreshToken);
+
+    void logout(String refreshToken);
 }

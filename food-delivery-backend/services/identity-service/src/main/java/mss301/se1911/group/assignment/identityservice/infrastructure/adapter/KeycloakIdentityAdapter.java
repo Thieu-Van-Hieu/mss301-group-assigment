@@ -130,4 +130,13 @@ public class KeycloakIdentityAdapter implements IdentityRepository {
 
         return keycloakAuthClient.refreshEndpoint(realm, formData);
     }
+
+    @Override
+    public void logout(String refreshToken) {
+        Map<String, String> formData = new HashMap<>();
+        formData.put("client_id", clientId);
+        formData.put("client_secret", clientSecret);
+        formData.put("refresh_token", refreshToken);
+        keycloakAuthClient.logoutEndpoint(realm, formData);
+    }
 }

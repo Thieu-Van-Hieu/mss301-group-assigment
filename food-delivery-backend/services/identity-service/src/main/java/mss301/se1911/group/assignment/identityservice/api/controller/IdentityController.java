@@ -10,6 +10,7 @@ import mss301.se1911.group.assignment.commonsecurity.dto.response.UserValidateRe
 import mss301.se1911.group.assignment.commonsecurity.filter.UserPrincipal;
 import mss301.se1911.group.assignment.identityservice.api.dto.request.UserRegisterRequest;
 import mss301.se1911.group.assignment.identityservice.api.dto.response.LoginUrlResponse;
+import mss301.se1911.group.assignment.identityservice.application.command.LogoutCommand;
 import mss301.se1911.group.assignment.identityservice.application.command.RegisterUserCommand;
 import mss301.se1911.group.assignment.identityservice.application.query.ExchangeCodeQuery;
 import mss301.se1911.group.assignment.identityservice.application.query.RefreshTokenQuery;
@@ -32,6 +33,7 @@ public class IdentityController {
     private final ValidateTokenUseCase validateTokenUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final GetLoginUrlUseCase getLoginUrlUseCase;
+    private final LogoutUseCase logoutUseCase;
 
     @GetMapping("/login-url")
     public ResponseEntity<LoginUrlResponse> getLoginUrl() {
@@ -120,6 +122,24 @@ public class IdentityController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse httpResponse) {
+        logoutUseCase.execute(LogoutCommand.builder()
+                .refreshToken(refreshToken)
+                .build());
+
+        // 🎯 Xóa sạch cookie ở trình duyệt khi người dùng chủ động nhấn nút Đăng xuất
+        Cookie cookie = new Cookie("refresh_token", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // Set thời gian sống bằng 0 để trình duyệt xóa ngay lập tức
+        httpResponse.addCookie(cookie);
+        return ResponseEntity.ok().build();
+    }
+
     /**
      * Hàm trợ giúp (Helper) cấu hình thông số và đẩy Cookie xuống trình duyệt.
      */
