@@ -5,8 +5,8 @@ import {RoleSelector} from "./RoleSelector.tsx";
 import {AppInput} from "../../../../components/AppInput.tsx";
 import {AppButton} from "../../../../components/AppButton.tsx";
 import {useNavigate} from "react-router-dom";
-import {PATHS} from "../../../../routes/paths.ts";
 import type {UserRegisterRequest} from "@repo/api/generated/identity-service-api";
+import {APP_ROUTES} from "@repo/routes";
 
 type RegisterRole = "CUSTOMER" | "MERCHANT" | "SHIPPER";
 
@@ -48,7 +48,7 @@ export const RegisterForm = () => {
 			if (response.status === 201) {
 				const roleName = role === "CUSTOMER" ? "Khách Hàng" : role === "MERCHANT" ? "Đối Tác" : "Tài Xế";
 				toast.success(`Tạo tài khoản ${roleName} thành công! Vui lòng đăng nhập qua Keycloak.`);
-				navigate(PATHS.LOGIN);
+				APP_ROUTES.AUTH.children.LOGIN.goTo(navigate);
 			}
 		} catch (err) {
 			console.error("Luồng đăng ký thất bại đã được Interceptor xử lý toast dữ liệu:", err);

@@ -1,4 +1,5 @@
 import {RegisterForm} from "../components/register/RegisterForm.tsx";
+import {APP_ROUTES} from "@repo/routes";
 
 export const RegisterPage = () => {
 	return (
@@ -57,7 +58,7 @@ export const RegisterPage = () => {
 					<div className="mt-8 text-center text-sm text-gray-500 border-t border-gray-100 pt-5">
 						Bạn đã có tài khoản?{" "}
 						<a
-							href="/login"
+							href={APP_ROUTES.AUTH.children.LOGIN.path}
 							className="font-bold text-brand hover:text-brand-dark hover:underline transition-smooth"
 						>
 							Đăng nhập qua Keycloak

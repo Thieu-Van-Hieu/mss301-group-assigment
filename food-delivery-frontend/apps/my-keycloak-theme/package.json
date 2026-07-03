@@ -10,14 +10,13 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
-        "build-keycloak-theme": "rimraf ./dist_keycloak && rimraf ./dist && npm run build && cross-env XDG_CACHE_HOME=./node_modules/.cache/keycloakify keycloakify build",
+        "build-keycloak-theme": "node -e \"const fs = require('fs'); fs.rmSync('./dist_keycloak', { recursive: true, force: true }); fs.rmSync('./dist', { recursive: true, force: true });\" && pnpm run build && cross-env XDG_CACHE_HOME=./node_modules/.cache/keycloakify keycloakify build",
         "storybook": "storybook dev -p 6006",
         "format": "prettier . --write"
     },
     "license": "MIT",
     "keywords": [],
     "dependencies": {
-        "keycloakify": "^11.15.9",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "sonner": "^2.0.7"
@@ -40,6 +39,7 @@
         "eslint-plugin-react-refresh": "^0.4.14",
         "eslint-plugin-storybook": "^0.11.1",
         "globals": "^15.12.0",
+        "keycloakify": "^11.15.11",
         "prettier": "3.3.1",
         "rimraf": "^6.1.3",
         "storybook": "^8.1.10",
