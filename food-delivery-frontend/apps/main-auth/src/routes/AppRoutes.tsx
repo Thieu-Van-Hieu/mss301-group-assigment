@@ -3,6 +3,7 @@ import {PATHS} from "./paths";
 import {RegisterPage} from "../features/auth/pages/RegisterPage";
 import {AuthCallbackPage} from "../features/auth/pages/AuthCallbackPage.tsx";
 import {LoginPageDispatcher} from "../features/auth/pages/LoginPageDispatcher.tsx";
+import {DashboardPage} from "../features/auth/pages/DashboardPage.tsx";
 
 export const AppRoutes = () => {
 	return (
@@ -14,6 +15,7 @@ export const AppRoutes = () => {
 			<Route path={PATHS.LOGIN} element={<LoginPageDispatcher/>}/>
 			<Route path={PATHS.REGISTER} element={<RegisterPage/>}/>
 			<Route path={PATHS.AUTH_CALLBACK} element={<AuthCallbackPage/>}/>
+			<Route path={PATHS.DASHBOARD} element={<DashboardPage/>}/>
 
 			{/* Bắt bài tất cả các URL bậy bạ không tồn tại */}
 			<Route path={PATHS.NOT_FOUND} element={<Navigate to={PATHS.LOGIN} replace/>}/>
