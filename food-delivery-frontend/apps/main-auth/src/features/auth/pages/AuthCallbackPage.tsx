@@ -3,6 +3,7 @@ import {useEffect, useRef} from "react";
 import {useAuth} from "@repo/auth";
 import {authApiClient} from "@repo/api";
 import type {ExchangeCodeRequest} from "@repo/api/generated/identity-service-api";
+import {APP_ROUTES} from "@repo/routes";
 
 /**
  * Trang xử lý phản hồi (Callback Page) sau khi người dùng đăng nhập thành công qua Identity Provider (Keycloak).
@@ -69,6 +70,7 @@ export const AuthCallbackPage = (): React.JSX.Element => {
 					} else {
 						console.error("Chi tiết lỗi kết nối:", error.message);
 					}
+					APP_ROUTES.AUTH.children.LOGIN.goTo(navigate, {replace: true});
 				});
 		} else if (!code) {
 			console.warn("⚠️ Không tìm thấy tham số 'code' trên đường dẫn URL.");

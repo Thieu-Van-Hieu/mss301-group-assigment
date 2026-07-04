@@ -1,6 +1,7 @@
 import axios, {AxiosInstance, InternalAxiosRequestConfig} from "axios";
 import {ErrorResponse} from "@/types";
 import {toast} from "sonner";
+import {APP_ROUTES} from "@repo/routes";
 
 /**
  * Mở rộng interface `AxiosRequestConfig` để tích hợp các cờ (flags) phục vụ
@@ -158,7 +159,7 @@ apiClient.interceptors.response.use(
 				if (originalRequest._isRefreshRequest) {
 					failedRequestsQueue = [];
 					isRefreshing = false;
-					window.location.href = "/login";
+					window.location.href = APP_ROUTES.AUTH.children.LOGIN.path;
 					return Promise.reject(error);
 				}
 
@@ -207,7 +208,7 @@ apiClient.interceptors.response.use(
 								// Refresh thất bại hoàn toàn: Từ chối toàn bộ hàng đợi và đẩy về trang Login
 								failedRequestsQueue.forEach((promise) => promise.reject(refreshError));
 								failedRequestsQueue = [];
-								window.location.href = "/login";
+								window.location.href = APP_ROUTES.AUTH.children.LOGIN.path;
 								reject(refreshError);
 							})
 							.finally(() => {

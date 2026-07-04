@@ -3,8 +3,8 @@ import {AuthContext} from "./authContext";
 import {UserInfo} from "@/types";
 import {registerStoreListener, updateAccessTokenGlobal} from "./authStore";
 import {authApiClient} from "@repo/api";
-import {APP_ROUTES} from "@repo/routes";
 import {useNavigate} from "react-router-dom";
+import {APP_ROUTES} from "@repo/routes";
 
 /**
  * Định nghĩa thuộc tính cấu hình (Props) cho thành phần `AuthProvider`.
@@ -76,11 +76,10 @@ export const AuthProvider = ({children}: AuthProviderProps): React.JSX.Element =
 	const logout = async (): Promise<void> => {
 		try {
 			await authApiClient.logout();
-		} catch (e) {
-			console.error("Lỗi logout:", e);
-		} finally {
 			setAccessToken(null);
 			APP_ROUTES.AUTH.children.LOGIN.goTo(navigate);
+		} catch (e) {
+			console.error("Lỗi logout:", e);
 		}
 	};
 

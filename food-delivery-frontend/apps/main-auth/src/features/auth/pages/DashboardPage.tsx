@@ -53,7 +53,7 @@ export const DashboardPage = (): React.JSX.Element => {
 
 					<button
 						onClick={logout}
-						className="px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-sm transition-colors duration-200 self-start sm:self-center"
+						className="cursor-pointer px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-sm transition-colors duration-200 self-start sm:self-center"
 					>
 						Đăng xuất tài khoản
 					</button>
