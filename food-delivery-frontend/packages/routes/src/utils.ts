@@ -1,30 +1,5 @@
 // @repo/constants/src/routes/utils.ts
-import {RouteNode} from "./RouteNode";
 import {APP_ROUTES} from "./index";
-import {RouteAccessLevel} from "./enums";
-
-export const extractWhitelistPaths = (routeTree: object): string[] => {
-	const paths: string[] = [];
-
-	const traverse = (node: any) => {
-		if (node instanceof RouteNode) {
-			if (node.accessLevel === RouteAccessLevel.PUBLIC || node.accessLevel === RouteAccessLevel.ANONYMOUS_ONLY) {
-				paths.push(node.path);
-			}
-			if (node.children) {
-				Object.values(node.children).forEach(traverse);
-			}
-		} else if (typeof routeTree === "object") {
-			Object.values(node).forEach(traverse);
-		}
-	};
-
-	traverse(routeTree);
-	return paths;
-};
-
-// 🎯 Xuất bản Whitelist tự động từ APP_ROUTES
-export const AUTH_SILENT_REFRESH_WHITELIST = extractWhitelistPaths(APP_ROUTES);
 
 /**
  * Mảng định nghĩa thứ tự ưu tiên của các Role trong hệ thống.

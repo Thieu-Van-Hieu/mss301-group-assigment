@@ -18,6 +18,11 @@ export const APP_ROUTES = {
 		rolesAllowed: ["WAREHOUSE"],
 		children: {DASHBOARD: new RouteNode("dashboard")}
 	}),
+	CUSTOMER: new RouteNode("customer", {
+		basePath: "http://localhost:500", // Cổng của App Customer
+		rolesAllowed: ["CUSTOMER"],
+		children: {DASHBOARD: new RouteNode("dashboard")}
+	}),
 	AUTH: new RouteNode("auth", {
 		basePath: "http://localhost:5000",
 		accessLevel: RouteAccessLevel.ANONYMOUS_ONLY,
@@ -28,5 +33,13 @@ export const APP_ROUTES = {
 			LOGOUT: new RouteNode("logout"),
 		}
 	}),
-	ERROR: new RouteNode("/*", {})
+	ERRORS: new RouteNode("error", {
+		accessLevel: RouteAccessLevel.PUBLIC,
+		children: {
+			UNAUTHORIZED: new RouteNode("401", {title: "Chưa đăng nhập"}),
+			FORBIDDEN: new RouteNode("403", {title: "Không có quyền truy cập"}),
+			NOT_FOUND: new RouteNode("404", {title: "Trang không tồn tại"}),
+		}
+	}),
+	NOT_FOUND_WILDCARD: new RouteNode("/*", {accessLevel: RouteAccessLevel.PUBLIC})
 }
