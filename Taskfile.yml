@@ -8,6 +8,13 @@ vars:
   DOCKER_CMD: "docker compose --env-file {{.ENV_INFRA}} --env-file {{.ENV_APP}}"
   KEYCLOAK_THEME_DIR: './food-delivery-frontend/apps/my-keycloak-theme'
   FRONTEND_DIR: './food-delivery-frontend'
+  BACKEND_DIR: './food-delivery-backend'
+
+  # 📦 MẢNG DANH SÁCH SERVICES ĐỂ QUẢN LÝ TẬP TRUNG VÀ CHẠY VÒNG LẶP
+  INFRA_SERVICES:
+    sh: echo "keycloak kafka config-processor prometheus grafana loki promtail"
+  BACKEND_SERVICES:
+    sh: echo "config-server eureka-server api-gateway identity-service delivery-service"
 
 tasks:
   # ==============================================================================
@@ -29,13 +36,29 @@ tasks:
       - task: dev
   
   # ==============================================================================
-  # 2. HẠ TẦNG (INFRASTRUCTURE)
+  # 2. KHỞI ĐỘNG HÀNG LOẠT DÙNG VÒNG LẶP (UP INFRA / BACKEND)
   # ==============================================================================
   up-infra:
-    desc: '🐳 Bật hạ tầng nền'
+    desc: '🐳 Bật toàn bộ hạ tầng nền (Sử dụng vòng lặp)'
     cmds:
-      - 'echo "⏳ Đang kích hoạt hạ tầng..."'
-      - 'COMPOSE_ANSI=never {{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --quiet-pull'
+      - 'echo "⏳ Đang kích hoạt các hạ tầng: {{.INFRA_SERVICES}}"'
+      - for: { var: INFRA_SERVICES }
+        cmd: "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --quiet-pull {{.ITEM}}"
+
+  up-backend:
+    desc: '⚙️ Bật toàn bộ Spring Boot Services (Tự động build local trước)'
+    deps: [ compile ]
+    cmds:
+      - task: _start-service
+        vars: { SERVICE: "config-server", MSG: "Config Server" }
+      - task: _start-service
+        vars: { SERVICE: "eureka-server", MSG: "Eureka Server" }
+      - 'echo "🚀 Khởi động các Core Services còn lại..."'
+      - for: { var: BACKEND_SERVICES }
+        cmd: |
+          if [ "{{.ITEM}}" != "config-server" ] && [ "{{.ITEM}}" != "eureka-server" ]; then
+            {{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --build --quiet-pull {{.ITEM}}
+          fi
 
   wait-for-infra:
     desc: '🔍 Đợi Keycloak và Kafka sẵn sàng'
@@ -45,110 +68,141 @@ tasks:
       - task: _wait-container
         vars: { NAME: "food-delivery-kafka", MSG: "Kafka" }
 
-  # ==============================================================================
-  # 3. BACKEND SERVICES
-  # ==============================================================================
-  up-backend:
-    desc: '⚙️ Bật Spring Boot Services'
+  compile:
+    desc: '☕ Biên dịch toàn bộ các module và service Spring Boot trên máy local'
+    dir: '{{.BACKEND_DIR}}'
     cmds:
-      - task: _start-service
-        vars: { SERVICE: "config-server", MSG: "Config Server" }
-      - task: _start-service
-        vars: { SERVICE: "eureka-server", MSG: "Eureka Server" }
-      - 'echo "🚀 Khởi động Core Services..."'
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d api-gateway identity-service delivery-service --quiet-pull'
-  
+      - 'echo "🛠️  Đang biên dịch siêu tốc bằng CPU máy thật..."'
+      - 'mvn clean install -DskipTests -T 1C'
+      - 'echo "✅ Biên dịch thành công! Đã sinh file .jar cho các service."'
+
   # ==============================================================================
-  # 4. FRONTEND DEVELOPMENT
+  # 3. UTILITIES: HOÀN TOÀN HỖ TRỢ 1 HOẶC NHIỀU SERVICES & CỜ NO-COMPILE
+  # ==============================================================================
+
+  # --- NHÓM 1: RECREATE (Tắt đi bật lại nhanh, chấp nhận truyền chuỗi "srv1 srv2") ---
+  recreate-infra:
+    desc: '🔄 Tái tạo nhanh các service INFRA (Ví dụ: task recreate-infra SERVICE="loki grafana")'
+    cmds:
+      - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --force-recreate --no-deps {{.SERVICE}}'
+    requires:
+      vars: [ SERVICE ]
+
+  recreate-backend:
+    desc: '🔄 Tái tạo nhanh các service BACKEND (Ví dụ: task recreate-backend SERVICE="identity-service api-gateway")'
+    cmds:
+      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --force-recreate --no-deps {{.SERVICE}}'
+    requires:
+      vars: [ SERVICE ]
+
+  # --- NHÓM 2: BUILD DOCKER IMAGE ---
+  build-infra:
+    desc: '🛠️  Chỉ build lại image cho các service INFRA (Ví dụ: task build-infra SERVICE="keycloak")'
+    cmds:
+      - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} build --no-cache {{.SERVICE}}'
+    requires:
+      vars: [ SERVICE ]
+
+  build-backend:
+    desc: '🛠️  Build image cho các service BACKEND (Mặc định tự động compile, tắt đi bằng COMPILE=false)'
+    cmds:
+      - |
+        if [ "{{.COMPILE}}" != "false" ]; then
+          echo "☕ Đang biên dịch toàn bộ hệ thống bằng Maven trước khi build image..."
+          cd {{.BACKEND_DIR}} && mvn clean install -DskipTests -T 1C
+        else
+          echo "⏭️  [Bỏ qua bước Compile] Tiến hành build thẳng Docker Image từ file .jar có sẵn..."
+        fi
+      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} build --no-cache {{.SERVICE}}'
+    vars:
+      COMPILE: '{{default "true" .COMPILE}}'
+    requires:
+      vars: [ SERVICE ]
+
+  # --- NHÓM 3: DEPLOY (BUILD + RECREATE) ---
+  deploy-infra:
+    desc: '⚡ Build + Recreate các service INFRA (Ví dụ: task deploy-infra SERVICE="prometheus loki")'
+    cmds:
+      - task: build-infra
+        vars: { SERVICE: "{{.SERVICE}}" }
+      - task: recreate-infra
+        vars: { SERVICE: "{{.SERVICE}}" }
+    requires:
+      vars: [ SERVICE ]
+
+  deploy-backend:
+    desc: '⚡ Compile + Build + Recreate cụm service BACKEND (Tắt compile bằng COMPILE=false)'
+    cmds:
+      - task: build-backend
+        vars: { SERVICE: "{{.SERVICE}}", COMPILE: "{{.COMPILE}}" }
+      - task: recreate-backend
+        vars: { SERVICE: "{{.SERVICE}}" }
+    vars:
+      COMPILE: '{{default "true" .COMPILE}}'
+    requires:
+      vars: [ SERVICE ]
+
+  # ==============================================================================
+  # 4. FRONTEND & KEYCLOAK UTILITIES
   # ==============================================================================
   dev-frontend:
     desc: '💻 Khởi động Frontend Development Server'
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - 'echo "🎨 Đang chạy Frontend Development..."'
       - 'pnpm install'
       - 'pnpm dev'
   
-  # ==============================================================================
-  # 5. KEYCLOAK UTILITIES (THEME & MIGRATION)
-  # ==============================================================================
-  build-theme:
-    desc: '🎨 Build Keycloak theme từ source'
-    dir: '{{.KEYCLOAK_THEME_DIR}}'
+  api-generator:
+    desc: '📝 Sinh code client API từ OpenAPI Spec (Swagger) cho Frontend'
+    dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - 'echo "🎨 Đang chạy script build-keycloak-theme..."'
       - 'pnpm install'
-      - 'pnpm run build-keycloak-theme'
-      - 'echo "✅ Build theme thành công!"'
+      - 'pnpm run api-generator'
 
   deploy-theme:
     desc: '🚀 Build và áp dụng theme mới cho container keycloak'
     cmds:
       - task: build-theme
-      - 'echo "🔄 Đang khởi động lại Keycloak (infra) để áp dụng theme..."'
-      - task: recreate
-        vars:
-          SERVICE: "food-delivery-keycloak"
-          FILE: "infra"
+      - task: recreate-infra
+        vars: { SERVICE: "keycloak" }
       - task: _wait-container
         vars: { NAME: "food-delivery-keycloak", MSG: "Keycloak" }
-      - 'echo "✅ Đã deploy theme và Keycloak đã sẵn sàng!"'
-  
+
+  build-theme:
+    internal: true
+    dir: '{{.KEYCLOAK_THEME_DIR}}'
+    cmds:
+      - 'pnpm install'
+      - 'pnpm run build-keycloak-theme'
+
   export-keycloak:
-    desc: '🔑 Export cấu hình và users (kèm mật khẩu) từ realm food-delivery và cập nhật vào template import'
+    desc: '🔑 Export cấu hình và users từ realm food-delivery'
     vars:
       CONTAINER_NAME: 'food-delivery-keycloak'
       REALM: 'food-delivery'
       INSIDE_FILE: 'food-delivery-realm.json'
       HOST_IMPORT_PATH: './development-template/keycloak-realm/realm-export.json'
     cmds:
-      - 'echo "⏳ Đang tiến hành export dữ liệu từ Realm [{{.REALM}}] bên trong container..."'
       - 'docker exec -i {{.CONTAINER_NAME}} /opt/keycloak/bin/kc.sh export --optimized --realm {{.REALM}} --file /opt/keycloak/{{.INSIDE_FILE}}'
-      - 'echo "🚚 Đang sao chép và ghi đè file cấu hình JSON vào đường dẫn import của dự án..."'
       - 'docker cp {{.CONTAINER_NAME}}:/opt/keycloak/{{.INSIDE_FILE}} {{.HOST_IMPORT_PATH}}'
-      - 'echo "🎉 [SUCCESS] Đã cập nhật file mẫu import tại: {{.HOST_IMPORT_PATH}}"'
-  
-  # ==============================================================================
-  # 6. UTILITIES (RECREATE, BUILD, CLEAN)
-  # ==============================================================================
-  recreate:
-    desc: '🔄 Tái tạo service (Usage: task recreate -- SERVICE=name FILE=infra)'
-    vars:
-      # Nếu FILE=infra thì dùng COMPOSE_INFRA, ngược lại dùng COMPOSE_APP
-      COMPOSE_FILE: '{{if eq .FILE "infra"}}{{.COMPOSE_INFRA}}{{else}}{{.COMPOSE_APP}}{{end}}'
-    cmds:
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_FILE}} up -d --force-recreate --no-deps {{.SERVICE}}'
-      - 'echo "✅ Đã tái tạo {{.SERVICE}}"'
-    requires:
-      vars: [ SERVICE ]
 
-  rebuild-and-restart:
-    desc: '🛠️ Build lại image và tái tạo (Usage: task rebuild-and-restart -- SERVICE=name FILE=infra)'
-    cmds:
-      - 'echo "🛠️ Đang build lại image cho {{.SERVICE}}..."'
-      - '{{.DOCKER_CMD}} -f {{if eq .FILE "infra"}}{{.COMPOSE_INFRA}}{{else}}{{.COMPOSE_APP}}{{end}} build --no-cache {{.SERVICE}}'
-      - task: recreate
-        vars: { SERVICE: "{{.SERVICE}}", FILE: "{{.FILE}}" }
-    requires:
-      vars: [ SERVICE ]
-
+  # ==============================================================================
+  # 5. DOWN & CLEAN
+  # ==============================================================================
   down:
     desc: '🛑 Dừng hệ thống'
     cmds:
-      - 'echo "🛑 Đang tắt hệ thống..."'
       - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} down'
       - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} down'
 
   clean:
     desc: '🚨 XÓA SẠCH HỆ THỐNG (Volume)'
     cmds:
-      - 'echo "⚠️ CẢNH BÁO - Đang xóa sạch dữ liệu volumes..."'
       - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} down -v'
       - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} down -v'
-      - 'echo "✨ Hệ thống đã được làm sạch hoàn toàn."'
 
   # ==============================================================================
-  # INTERNAL TASKS
+  # INTERNAL TASKS (HÀM BỔ TRỢ)
   # ==============================================================================
   _wait-container:
     internal: true
@@ -165,8 +219,7 @@ tasks:
   _start-service:
     internal: true
     cmds:
-      - 'echo "⏳ Đang bật {{.MSG}}..."'
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d {{.SERVICE}} --quiet-pull'
+      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --build --force-recreate {{.SERVICE}} --quiet-pull'
       - platforms: [ windows ]
         cmd: powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; while (!(docker ps --filter 'name={{.SERVICE}}' --filter 'health=healthy' | Select-String '{{.SERVICE}}')) { Write-Host '   ({{.MSG}} đang khởi tạo...)'; Start-Sleep -Seconds 3 }"
       - platforms: [ darwin, linux ]

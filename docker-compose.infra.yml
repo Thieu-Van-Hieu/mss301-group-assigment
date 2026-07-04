@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ==========================================
   # 1. KEYCLOAK SERVER
@@ -16,6 +14,9 @@ services:
       KC_HTTP_PORT: ${KEYCLOAK_PORT}
       KC_THEME_CACHE_THEMES: "false"
       KC_THEME_CACHE_TEMPLATES: "false"
+      KC_HOSTNAME_URL: ${KEYCLOAK_EXTERNAL_URL}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
     ports:
       - "${KEYCLOAK_PORT}:${KEYCLOAK_PORT}"
     volumes:
@@ -39,10 +40,12 @@ services:
       KAFKA_NODE_ID: ${KAFKA_NODE_ID}
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '${KAFKA_NODE_ID}@kafka:${KAFKA_PORT_CONTROLLER}'
-      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:${KAFKA_PORT_EXTERNAL},CONTROLLER://0.0.0.0:${KAFKA_PORT_CONTROLLER},PLAINTEXT_HOST://0.0.0.0:${KAFKA_PORT_INTERNAL}'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:${KAFKA_PORT_EXTERNAL},PLAINTEXT_HOST://kafka:${KAFKA_PORT_INTERNAL}'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_LISTENERS: 'EXTERNAL://0.0.0.0:${KAFKA_PORT_EXTERNAL},INTERNAL://0.0.0.0:${KAFKA_PORT_INTERNAL},CONTROLLER://0.0.0.0:${KAFKA_PORT_CONTROLLER}'
+      KAFKA_ADVERTISED_LISTENERS: 'EXTERNAL://${KAFKA_HOSTNAME_EXTERNAL}:${KAFKA_PORT_EXTERNAL},INTERNAL://kafka:${KAFKA_PORT_INTERNAL}'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      
       CLUSTER_ID: ${KAFKA_CLUSTER_ID}
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -71,17 +74,17 @@ services:
       - "-c"
       - |
         apk add --no-cache gettext > /dev/null
-        mkdir -p /config/yml-generated/prometheus
-        envsubst < /config/development-template/yml-template/prometheus/prometheus.yml.template > /config/yml-generated/prometheus/prometheus.yml
-        mkdir -p /config/yml-generated/promtail
-        envsubst < /config/development-template/yml-template/promtail/config.yml.template > /config/yml-generated/promtail/config.yml
-        mkdir -p /config/yml-generated/loki
-        envsubst < /config/development-template/yml-template/loki/local-config.yml.template > /config/yml-generated/loki/local-config.yaml
-        mkdir -p /config/yml-generated/grafana/datasources
-        envsubst < /config/development-template/yml-template/grafana/datasources.yml.template > /config/yml-generated/grafana/datasources/datasources.yaml
-        mkdir -p /config/yml-generated/grafana/dashboards/json
-        envsubst < /config/development-template/yml-template/grafana/dashboards.yml.template > /config/yml-generated/grafana/dashboards/dashboards.yaml
-        cp /config/grafana-dashboards/services-monitor-dashboard.json /config/yml-generated/grafana/dashboards/json/services-monitor-dashboard.json
+        mkdir -p /development-template/yml-generated/prometheus
+        envsubst < /development-template/yml-template/prometheus/prometheus.yml.template > /development-template/yml-generated/prometheus/prometheus.yml
+        mkdir -p /development-template/yml-generated/promtail
+        envsubst < /development-template/yml-template/promtail/config.yml.template > /development-template/yml-generated/promtail/config.yml
+        mkdir -p /development-template/yml-generated/loki
+        envsubst < /development-template/yml-template/loki/local-config.yml.template > /development-template/yml-generated/loki/local-config.yaml
+        mkdir -p /development-template/yml-generated/grafana/datasources
+        envsubst < /development-template/yml-template/grafana/datasources.yml.template > /development-template/yml-generated/grafana/datasources/datasources.yaml
+        mkdir -p /development-template/yml-generated/grafana/dashboards/json
+        envsubst < /development-template/yml-template/grafana/dashboards.yml.template > /development-template/yml-generated/grafana/dashboards/dashboards.yaml
+        cp /config/grafana-dashboards/services-monitor-dashboard.json /development-template/yml-generated/grafana/dashboards/json/services-monitor-dashboard.json
         echo "SUCCESS: Đã tạo cây cấu hình chuẩn không cần dùng lệnh command bổ trợ!"
     networks:
       - food-delivery-network

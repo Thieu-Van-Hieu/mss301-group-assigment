@@ -1,6 +1,5 @@
 package mss301.se1911.group.assignment.identityservice.api.controller;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,9 @@ import mss301.se1911.group.assignment.identityservice.application.query.RefreshT
 import mss301.se1911.group.assignment.identityservice.application.query.ValidateTokenQuery;
 import mss301.se1911.group.assignment.identityservice.application.usecase.*;
 import mss301.se1911.group.assignment.identityservice.domain.aggregate.Account;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -102,6 +103,7 @@ public class IdentityController {
     public ResponseEntity<TokenResponse> refreshToken(
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse httpResponse) { // 🎯 Tiêm HttpServletResponse để cập nhật xoay vòng Cookie
+        log.info("🔄 Yêu cầu làm mới mã thông báo nhận được. Refresh Token từ Cookie: {}", refreshToken);
 
         // 🎯 1. Nếu F5 hoặc Refresh ngầm mà không mang kèm theo Cookie -> Chặn luôn từ vòng gửi xe bằng 401
         if (refreshToken == null || refreshToken.isBlank()) {
@@ -127,16 +129,13 @@ public class IdentityController {
     public ResponseEntity<Void> logout(
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse httpResponse) {
+        log.info("🚪 Yêu cầu đăng xuất nhận được. Refresh Token từ Cookie: {}", refreshToken);
+
         logoutUseCase.execute(LogoutCommand.builder()
                 .refreshToken(refreshToken)
                 .build());
 
-        // 🎯 Xóa sạch cookie ở trình duyệt khi người dùng chủ động nhấn nút Đăng xuất
-        Cookie cookie = new Cookie("refresh_token", null);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // Set thời gian sống bằng 0 để trình duyệt xóa ngay lập tức
-        httpResponse.addCookie(cookie);
+        setRefreshCookie(httpResponse, "", 0);
         return ResponseEntity.ok().build();
     }
 
@@ -144,11 +143,14 @@ public class IdentityController {
      * Hàm trợ giúp (Helper) cấu hình thông số và đẩy Cookie xuống trình duyệt.
      */
     private void setRefreshCookie(HttpServletResponse response, String token, long maxAgeInSeconds) {
-        Cookie cookie = new Cookie("refresh_token", token);
-        cookie.setHttpOnly(true);   // Ngăn chặn JavaScript (XSS) tiếp cận đọc mã token này
-        cookie.setPath("/");       // Cookie có hiệu lực trên toàn cục hệ thống
-        cookie.setSecure(false);   // Đổi thành true nếu chạy thực tế trên môi trường mạng HTTPS 
-        cookie.setMaxAge((int) maxAgeInSeconds); // Thời gian sống đồng bộ với cấu hình từ Keycloak
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", token)
+                .httpOnly(true)
+                .path("/")
+                .secure(false) // Giữ nguyên false cho HTTP local giống code cũ của bạn
+                .sameSite("Lax") // Hoặc "None" nếu bạn đổi .secure(true) và chạy HTTPS
+                .maxAge(maxAgeInSeconds)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

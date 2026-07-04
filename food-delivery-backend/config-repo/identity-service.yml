@@ -3,7 +3,7 @@ server:
 
 # Cấu hình kết nối sang Keycloak Server dành cho Keycloak Admin Client
 keycloak:
-  server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8180}
+  server-url: ${KEYCLOAK_INTERNAL_URL:http://localhost:8180}
   realm: ${KEYCLOAK_REALM:food-delivery}
   admin-realm: ${KEYCLOAK_ADMIN_REALM:master}
   admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
@@ -27,7 +27,7 @@ spring:
             connectTimeout: 2000 # 2 giây để kết nối mạng
             readTimeout: 5000    # 5 giây để chờ xử lý xong dữ liệu
           keycloak-auth-client:
-            url: ${KEYCLOAK_SERVER_URL:http://localhost:8180}
+            url: ${KEYCLOAK_INTERNAL_URL:http://localhost:8180}
             connectTimeout: 1000
             readTimeout: 3000
 logging:

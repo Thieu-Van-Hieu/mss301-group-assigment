@@ -7,48 +7,46 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
-    # 🌟 ĐÂY LÀ ĐOẠN ĐỊNH NGHĨA GỘP SWAGGER THỦ CÔNG
+    # 🌟 CẬP NHẬT CẤU HÌNH GỘP SWAGGER CHO WEBFLUX CHUẨN
     urls:
-      - name: Identity Service # Tên hiển thị trong Dropdown của Swagger UI
-        url: /api/v1/auth/v3/api-docs # Đường dẫn Swagger của Service thông qua Route của Gateway
+      - name: Identity Service
+        url: /api/v1/auth/v3/api-docs
         displayName: Identity Service API
 
 spring:
   cloud:
     gateway:
-      server:
-        webflux:
-          routes:
-            # 🌟 ROUTE 1: Điều hướng các API nghiệp vụ thông thường
-            - id: identity-service-route
-              uri: lb://identity-service
-              predicates:
-                - Path=/api/v1/auth/**
-            
-            # 🌟 ROUTE 2: Route này cực kỳ quan trọng, giúp Gateway tải được file JSON docs từ Service về
-            - id: identity-service-openapi-route
-              uri: lb://identity-service
-              predicates:
-                - Path=/api/v1/auth/v3/api-docs
-          globalcors:
-            # Kích hoạt CORS preflight cho các request OPTIONS không khớp với route định sẵn
-            add-to-simple-url-handler-mapping: true
-            cors-configurations:
-              '[/**]': # Áp dụng cấu hình này cho TẤT CẢ các API đi qua Gateway
-                allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
-                allowedMethods:
-                  - GET
-                  - POST
-                  - PUT
-                  - DELETE
-                  - OPTIONS
-                  - PATCH
-                allowedHeaders: "*"
-                allowCredentials: true
-                maxAge: 3600
+      # 🌟 ĐÃ XÓA KHỐI 'server.webflux' -> ĐƯA KHỐI 'routes' RA ĐÂY
+      routes:
+        # 🌟 ROUTE 1: Điều hướng các API nghiệp vụ thông thường
+        - id: identity-service-route
+          uri: lb://identity-service
+          predicates:
+            - Path=/api/v1/auth/**
+        
+        # 🌟 ROUTE 2: Giúp Gateway tải được file JSON docs từ Service về
+        - id: identity-service-openapi-route
+          uri: lb://identity-service
+          predicates:
+            - Path=/api/v1/auth/v3/api-docs
+      
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:food-delivery}
-          jwk-set-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:food-delivery}/protocol/openid-connect/certs
+          jwk-set-uri: ${KEYCLOAK_INTERNAL_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:food-delivery}/protocol/openid-connect/certs

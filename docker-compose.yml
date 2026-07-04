@@ -1,54 +1,36 @@
-version: '3.8'
-
-# ==============================================================================
-# TEMPLATE DÙNG CHUNG CHO TOÀN BỘ SPRING BOOT SERVICES (JAVA 21)
-# ==============================================================================
-x-spring-base: &spring-base
-  image: maven:3.9.6-eclipse-temurin-21-alpine
-  # Mount toàn bộ folder mẹ để các service có thể nhìn thấy folder "shared/" nằm bên cạnh
-  volumes:
-    - ~/.m2:/root/.m2
-    - ${CONFIG_REPO_ROOT}:/app
-  env_file:
-    - .env.infra
-    - .env.app
-    - .env.backend.development
-  networks:
-    - food-delivery-network
-
 services:
-  # ==============================================================================
-  # MỒI BIÊN DỊCH: Install các module Shared/Common vào .m2 trước khi Core Services lên
-  # ==============================================================================
-  backend-builder:
-    <<: *spring-base
-    container_name: food-delivery-backend-builder
-    working_dir: /app
-    command: mvn install -DskipTests -T 1C
-
-  # ==============================================================================
-  # INFRA SERVICES (Nằm trong config_repo_root/infra/...)
-  # ==============================================================================
   config-server:
-    <<: *spring-base
+    build:
+      context: ./${BACKEND_PATH}/${CONFIG_SERVER_SUB_PATH}
+      dockerfile: Dockerfile
     container_name: food-delivery-config-server
-    working_dir: /app/${CONFIG_SERVER_SUB_PATH} # 🚀 Định vị đúng thư mục chạy lệnh
-    command: mvn spring-boot:run
     ports:
       - "${CONFIG_SERVER_PORT}:${CONFIG_SERVER_PORT}"
+    env_file:
+      - .env.infra
+      - .env.app
+      - .env.backend.development
+    volumes:
+      - ${CONFIG_REPO_PATH}:/app/config-repo
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:${CONFIG_SERVER_PORT}/actuator/health" ]
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - food-delivery-network
 
   eureka-server:
-    <<: *spring-base
+    build:
+      context: ./${BACKEND_PATH}/${EUREKA_SERVER_SUB_PATH}
+      dockerfile: Dockerfile
     container_name: food-delivery-eureka-server
-    working_dir: /app/${EUREKA_SERVER_SUB_PATH}
-    command: mvn spring-boot:run
     ports:
       - "${EUREKA_SERVER_PORT}:${EUREKA_SERVER_PORT}"
+    env_file:
+      - .env.infra
+      - .env.app
+      - .env.backend.development
     depends_on:
       config-server:
         condition: service_healthy
@@ -57,52 +39,60 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-
+    networks:
+      - food-delivery-network
+  
   api-gateway:
-    <<: *spring-base
+    build:
+      context: ./${BACKEND_PATH}/${API_GATEWAY_SUB_PATH}
+      dockerfile: Dockerfile
     container_name: food-delivery-api-gateway
-    working_dir: /app/${API_GATEWAY_SUB_PATH}
-    command: mvn spring-boot:run
     ports:
       - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+    env_file:
+      - .env.infra
+      - .env.app
+      - .env.backend.development
     depends_on:
       eureka-server:
         condition: service_healthy
-      backend-builder:
-        condition: service_completed_successfully # 🚀 Đợi build xong xuôi các dependency mới chạy
+    networks:
+      - food-delivery-network
 
-  # ==============================================================================
-  # CORE SERVICES (Nằm trong config_repo_root/services/...)
-  # ==============================================================================
   identity-service:
-    <<: *spring-base
+    build:
+      context: ./${BACKEND_PATH}/${IDENTITY_SERVICE_SUB_PATH}
+      dockerfile: Dockerfile
     container_name: food-delivery-identity-service
-    working_dir: /app/${IDENTITY_SERVICE_SUB_PATH} # 🚀 Trỏ vào đúng phân mục nghiệp vụ
-    command: mvn spring-boot:run
     ports:
       - "${IDENTITY_SERVICE_PORT}:${IDENTITY_SERVICE_PORT}"
+    env_file:
+      - .env.infra
+      - .env.app
+      - .env.backend.development
     depends_on:
       eureka-server:
         condition: service_healthy
-      backend-builder:
-        condition: service_completed_successfully # 🚀 Chờ jar common nạp vào .m2 thành công
+    networks:
+      - food-delivery-network
 
   delivery-service:
-    <<: *spring-base
+    build:
+      context: ./${BACKEND_PATH}/${DELIVERY_SERVICE_SUB_PATH}
+      dockerfile: Dockerfile
     container_name: food-delivery-delivery-service
-    working_dir: /app/${DELIVERY_SERVICE_SUB_PATH}
-    command: mvn spring-boot:run
     ports:
       - "${DELIVERY_SERVICE_PORT}:${DELIVERY_SERVICE_PORT}"
+    env_file:
+      - .env.infra
+      - .env.app
+      - .env.backend.development
     depends_on:
       eureka-server:
         condition: service_healthy
-      backend-builder:
-        condition: service_completed_successfully # 🚀 Chờ jar common nạp vào .m2 thành công
+    networks:
+      - food-delivery-network
 
-# ==============================================================================
-# MẠNG DÙNG CHUNG KÉ BÊN FILE INFRA
-# ==============================================================================
 networks:
   food-delivery-network:
     external: true
