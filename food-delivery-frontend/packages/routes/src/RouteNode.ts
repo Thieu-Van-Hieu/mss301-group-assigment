@@ -126,4 +126,34 @@ export class RouteNode<T = object> implements IRouteDetail {
 		// 🚀 CÙNG APP (Hoặc không cấu hình basePath): Soft Redirect nội bộ bằng React Router để giữ trạng thái mượt mà
 		reactNavigateInstance(this.path, options);
 	}
+
+	/**
+	 * 🎯 KIỂM TRA QUYỀN TRUY CẬP NHANH (Bao gồm cả Access Level và Roles)
+	 * @param userRoles Mảng danh sách các role hiện tại của user (ví dụ: user?.roles)
+	 * @returns true nếu hợp lệ, false nếu bị chặn
+	 */
+	canAccess(userRoles: string[] | undefined): boolean {
+		// 1. Nếu là tuyến đường PUBLIC -> Luôn luôn cho qua
+		if (this.accessLevel === RouteAccessLevel.PUBLIC) {
+			return true;
+		}
+
+		// 2. Nếu là ANONYMOUS_ONLY -> Chỉ cho phép khi CHƯA đăng nhập (userRoles phải undefined/rỗng)
+		if (this.accessLevel === RouteAccessLevel.ANONYMOUS_ONLY) {
+			return !userRoles || userRoles.length === 0;
+		}
+
+		// 3. Nếu là PROTECTED (Mặc định) -> Bắt buộc phải có đăng nhập
+		if (!userRoles || userRoles.length === 0) {
+			return false;
+		}
+
+		// 4. Nếu node có yêu cầu cụ thể về RolesAllowed -> Kiểm tra xem user có khớp không
+		if (this.rolesAllowed.length > 0) {
+			const normalizedUserRoles = userRoles.map(r => r.trim().toUpperCase());
+			return this.rolesAllowed.some(role => normalizedUserRoles.includes(role));
+		}
+
+		return true;
+	}
 }
