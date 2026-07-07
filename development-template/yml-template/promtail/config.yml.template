@@ -6,13 +6,17 @@ positions:
   filename: /tmp/positions.yml
 
 clients:
-  - url: http://food-delivery-loki:$LOKI_PORT/loki/api/v1/push
+  # 🌟 Đồng bộ lại thành ${LOKI_PORT} cho chuẩn cấu trúc
+  - url: http://food-delivery-loki:${LOKI_PORT}/loki/api/v1/push
 
 scrape_configs:
   - job_name: docker-logs
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
+        refresh_interval: 5s # 🌟 Ép Promtail quét tìm container mới sau mỗi 5 giây
     relabel_configs:
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'
         target_label: 'container'
+      - source_labels: ['container'] # Tự động tạo nhãn job dựa trên tên container để tìm kiếm nhanh trên Grafana UI
+        target_label: 'job'

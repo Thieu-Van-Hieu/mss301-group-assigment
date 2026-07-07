@@ -27,7 +27,6 @@ tasks:
       - task: wait-for-infra
       - task: up-backend
       - 'echo "🎉 [SUCCESS] Hệ thống Food Delivery đã sẵn sàng!"'
-      - 'echo "📊 Grafana: http://localhost:3000 | 🔑 Keycloak: http://localhost:8080 | 🌍 Gateway: http://localhost:8888"'
 
   clean-dev:
     desc: '🧹 Xóa sạch dữ liệu cũ và khởi động lại từ đầu'
