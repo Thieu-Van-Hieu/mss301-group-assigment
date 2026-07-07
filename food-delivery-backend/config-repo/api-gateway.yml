@@ -7,24 +7,48 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
-    # 🌟 CẬP NHẬT CẤU HÌNH GỘP SWAGGER CHO WEBFLUX CHUẨN
     urls:
       - name: Identity Service
         url: /api/v1/auth/v3/api-docs
         displayName: Identity Service API
 
 spring:
+  # 🌟 THÊM CONFIG KẾT NỐI REDIS (Bắt buộc phải có để chạy Rate Limiter)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # password: ${REDIS_PASSWORD:} # Mở ra nếu Redis của bạn có mật khẩu
+
   cloud:
     gateway:
-      # 🌟 ĐÃ XÓA KHỐI 'server.webflux' -> ĐƯA KHỐI 'routes' RA ĐÂY
       routes:
-        # 🌟 ROUTE 1: Điều hướng các API nghiệp vụ thông thường
+        # 🌟 ROUTE 1: Tích hợp Rate Limiter và Retry vào API Nghiệp vụ
         - id: identity-service-route
           uri: lb://identity-service
           predicates:
             - Path=/api/v1/auth/**
-        
-        # 🌟 ROUTE 2: Giúp Gateway tải được file JSON docs từ Service về
+          filters:
+            # A. Chống Spam / DDoS bằng Rate Limiter
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@userKeyResolver}" # Gọi đến Bean Java xử lý JWT/IP
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+            
+            # B. Tự động thử lại nếu Identity Service bị lỗi mạng/sập/timeout
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT
+                methods: GET, OPTIONS # Chỉ retry các request an toàn
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 1000ms
+                  factor: 2
+
+        # 🌟 ROUTE 2: Giúp Gateway tải được file JSON docs từ Service về (Không cần Rate Limit/Retry)
         - id: identity-service-openapi-route
           uri: lb://identity-service
           predicates:

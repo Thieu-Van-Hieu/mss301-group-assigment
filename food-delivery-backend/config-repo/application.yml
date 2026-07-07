@@ -18,3 +18,24 @@ management:
       show-details: ${ACTUATOR_HEALTH_SHOW_DETAILS:always}
     env:
       show-values: ${ACTUATOR_ENV_SHOW_VALUES:when_authorized}
+
+spring:
+  cloud:
+    loadbalancer:
+      # Kích hoạt tính năng tự động thử lại của Load Balancer
+      retry:
+        enabled: true
+        # Thử lại tối đa 1 lần trên CÙNG MỘT instance vừa báo lỗi
+        max-retries-on-same-service-instance: 1
+        # Nếu vẫn lỗi, tự động chuyển sang thử lại tối đa 2 lần trên các instance KHÁC (nhờ Eureka điều hướng)
+        max-retries-on-next-service-instance: 2
+        # Chỉ tự động retry đối với các request GET (an toàn)
+        retry-on-all-operations: false
+
+# Cấu hình Timeout cho Feign Client tránh treo kết nối quá lâu
+feign:
+  client:
+    config:
+      default: # Áp dụng toàn cục cho tất cả Feign Client
+        connectTimeout: 2000    # 2 giây chờ kết nối
+        readTimeout: 5000       # 5 giây chờ phản hồi dữ liệu
