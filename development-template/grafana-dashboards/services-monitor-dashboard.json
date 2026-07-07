@@ -187,7 +187,7 @@
             {
                 "current": {
                     "selected": true,
-                    "value": ".+"
+                    "value": ".*"
                 },
                 "hide": 0,
                 "includeAll": false,
@@ -197,30 +197,30 @@
                     {
                         "selected": true,
                         "text": "All (Tất cả hệ thống)",
-                        "value": ".+"
+                        "value": ".*"
                     },
                     {
                         "selected": false,
                         "text": "Identity Service",
-                        "value": "identity-service"
+                        "value": ".*identity-service.*|.*IDENTITY-SERVICE.*"
                     },
                     {
                         "selected": false,
                         "text": "API Gateway",
-                        "value": "api-gateway"
+                        "value": ".*api-gateway.*|.*API-GATEWAY.*"
                     },
                     {
                         "selected": false,
                         "text": "Keycloak Auth Server",
-                        "value": "food-delivery-keycloak"
+                        "value": ".*keycloak.*"
                     },
                     {
                         "selected": false,
                         "text": "Kafka Message Broker",
-                        "value": "food-delivery-kafka"
+                        "value": ".*kafka.*"
                     }
                 ],
-                "query": ".+, identity-service, api-gateway, food-delivery-keycloak, food-delivery-kafka",
+                "query": ".*, .*identity-service.*|.*IDENTITY-SERVICE.*, .*api-gateway.*|.*API-GATEWAY.*, .*keycloak.*, .*kafka.*",
                 "type": "custom"
             }
         ]

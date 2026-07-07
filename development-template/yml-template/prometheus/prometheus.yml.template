@@ -5,10 +5,11 @@ scrape_configs:
   - job_name: 'identity-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      # Vì Prometheus chạy trong Docker, ta dùng host.docker.internal để gọi ngược ra máy thật (Localhost)
-      - targets: ['host.docker.internal:8085']
+      # 🌟 Tự động lấy giá trị cổng từ biến IDENTITY_SERVICE_PORT trong file .env
+      - targets: ['host.docker.internal:${IDENTITY_SERVICE_PORT}']
 
   - job_name: 'api-gateway'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:8080']
+      # 🌟 Tự động lấy giá trị cổng từ biến API_GATEWAY_PORT trong file .env
+      - targets: ['host.docker.internal:${API_GATEWAY_PORT}']

@@ -107,6 +107,7 @@ public class CommonSecurityAutoConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(paths).permitAll() // Nạp danh sách động từ YAML
                         .anyRequest().authenticated()
                 )

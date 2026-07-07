@@ -28,6 +28,12 @@ tasks:
       - task: up-backend
       - 'echo "🎉 [SUCCESS] Hệ thống Food Delivery đã sẵn sàng!"'
 
+  down-dev:
+    desc: '🛑 Dừng toàn bộ hệ thống và chạy lại'
+    cmds:
+      - task: down
+      - task: dev
+
   clean-dev:
     desc: '🧹 Xóa sạch dữ liệu cũ và khởi động lại từ đầu'
     cmds:

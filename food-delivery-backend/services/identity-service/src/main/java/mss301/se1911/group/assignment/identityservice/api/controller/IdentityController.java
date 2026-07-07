@@ -103,11 +103,9 @@ public class IdentityController {
     public ResponseEntity<TokenResponse> refreshToken(
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse httpResponse) { // 🎯 Tiêm HttpServletResponse để cập nhật xoay vòng Cookie
-        log.info("🔄 Yêu cầu làm mới mã thông báo nhận được. Refresh Token từ Cookie: {}", refreshToken);
 
         // 🎯 1. Nếu F5 hoặc Refresh ngầm mà không mang kèm theo Cookie -> Chặn luôn từ vòng gửi xe bằng 401
         if (refreshToken == null || refreshToken.isBlank()) {
-            log.warn("⚠️ Yêu cầu làm mới mã thông báo bị từ chối do không tìm thấy Cookie 'refresh_token'.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -129,7 +127,6 @@ public class IdentityController {
     public ResponseEntity<Void> logout(
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse httpResponse) {
-        log.info("🚪 Yêu cầu đăng xuất nhận được. Refresh Token từ Cookie: {}", refreshToken);
 
         logoutUseCase.execute(LogoutCommand.builder()
                 .refreshToken(refreshToken)
