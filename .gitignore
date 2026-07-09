@@ -71,6 +71,7 @@ food-delivery-frontend/**/generated
 !**/keycloak-realm/
 !**/keycloak-realm/**
 !Taskfile.yml
+!menu.js
 
 # ==============================================================================
 # VI. KHU VỰC LOẠI BỎ (DANH SÁCH ĐEN CẤM ĐẨY LÊN GIT)

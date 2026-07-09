@@ -1,14 +1,14 @@
-version: '3'
+version: "3"
 
 vars:
-  ENV_INFRA: '.env.infra'
-  COMPOSE_INFRA: 'docker-compose.infra.yml'
-  ENV_APP: '.env.app'
-  COMPOSE_APP: 'docker-compose.yml'
+  ENV_INFRA: ".env.infra"
+  COMPOSE_INFRA: "docker-compose.infra.yml"
+  ENV_APP: ".env.app"
+  COMPOSE_APP: "docker-compose.yml"
   DOCKER_CMD: "docker compose --env-file {{.ENV_INFRA}} --env-file {{.ENV_APP}}"
-  KEYCLOAK_THEME_DIR: './food-delivery-frontend/apps/my-keycloak-theme'
-  FRONTEND_DIR: './food-delivery-frontend'
-  BACKEND_DIR: './food-delivery-backend'
+  KEYCLOAK_THEME_DIR: "./food-delivery-frontend/apps/my-keycloak-theme"
+  FRONTEND_DIR: "./food-delivery-frontend"
+  BACKEND_DIR: "./food-delivery-backend"
 
   # 📦 MẢNG DANH SÁCH SERVICES ĐỂ QUẢN LÝ TẬP TRUNG VÀ CHẠY VÒNG LẶP
   INFRA_SERVICES:
@@ -18,10 +18,18 @@ vars:
 
 tasks:
   # ==============================================================================
+  # GIAO DIỆN DIỀU KHIỂN TRỰC QUAN (INTERACTIVE MENU)
+  # ==============================================================================
+  default:
+    desc: "🎮 Mở menu tương tác điều khiển hệ thống"
+    cmds:
+      - "node menu.js"
+
+  # ==============================================================================
   # 1. QUY TRÌNH CHÍNH (MAIN WORKFLOW)
   # ==============================================================================
   dev:
-    desc: '🚀 Quy trình khởi động full hệ thống'
+    desc: "🚀 Quy trình khởi động full hệ thống"
     cmds:
       - task: up-infra
       - task: wait-for-infra
@@ -29,30 +37,30 @@ tasks:
       - 'echo "🎉 [SUCCESS] Hệ thống Food Delivery đã sẵn sàng!"'
 
   down-dev:
-    desc: '🛑 Dừng toàn bộ hệ thống và chạy lại'
+    desc: "🛑 Dừng toàn bộ hệ thống và chạy lại"
     cmds:
       - task: down
       - task: dev
 
   clean-dev:
-    desc: '🧹 Xóa sạch dữ liệu cũ và khởi động lại từ đầu'
+    desc: "🧹 Xóa sạch dữ liệu cũ và khởi động lại từ đầu"
     cmds:
       - task: clean
       - task: dev
-  
+
   # ==============================================================================
   # 2. KHỞI ĐỘNG HÀNG LOẠT DÙNG VÒNG LẶP (UP INFRA / BACKEND)
   # ==============================================================================
   up-infra:
-    desc: '🐳 Bật toàn bộ hạ tầng nền (Sử dụng vòng lặp)'
+    desc: "🐳 Bật toàn bộ hạ tầng nền (Sử dụng vòng lặp)"
     cmds:
       - 'echo "⏳ Đang kích hoạt các hạ tầng: {{.INFRA_SERVICES}}"'
       - for: { var: INFRA_SERVICES }
         cmd: "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --quiet-pull {{.ITEM}}"
 
   up-backend:
-    desc: '⚙️ Bật toàn bộ Spring Boot Services (Tự động build local trước)'
-    deps: [ compile ]
+    desc: "⚙️ Bật toàn bộ Spring Boot Services (Tự động build local trước)"
+    deps: [compile]
     cmds:
       - task: _start-service
         vars: { SERVICE: "config-server", MSG: "Config Server" }
@@ -66,7 +74,7 @@ tasks:
           fi
 
   wait-for-infra:
-    desc: '🔍 Đợi Keycloak và Kafka sẵn sàng'
+    desc: "🔍 Đợi Keycloak và Kafka sẵn sàng"
     cmds:
       - task: _wait-container
         vars: { NAME: "food-delivery-keycloak", MSG: "Keycloak" }
@@ -74,11 +82,11 @@ tasks:
         vars: { NAME: "food-delivery-kafka", MSG: "Kafka" }
 
   compile:
-    desc: '☕ Biên dịch toàn bộ các module và service Spring Boot trên máy local'
-    dir: '{{.BACKEND_DIR}}'
+    desc: "☕ Biên dịch toàn bộ các module và service Spring Boot trên máy local"
+    dir: "{{.BACKEND_DIR}}"
     cmds:
       - 'echo "🛠️  Đang biên dịch siêu tốc bằng CPU máy thật..."'
-      - 'mvn clean install -DskipTests -T 1C'
+      - "mvn clean install -DskipTests -T 1C"
       - 'echo "✅ Biên dịch thành công! Đã sinh file .jar cho các service."'
 
   # ==============================================================================
@@ -89,27 +97,27 @@ tasks:
   recreate-infra:
     desc: '🔄 Tái tạo nhanh các service INFRA (Ví dụ: task recreate-infra SERVICE="loki grafana")'
     cmds:
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --force-recreate --no-deps {{.SERVICE}}'
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --force-recreate --no-deps {{.SERVICE}}"
     requires:
-      vars: [ SERVICE ]
+      vars: [SERVICE]
 
   recreate-backend:
     desc: '🔄 Tái tạo nhanh các service BACKEND (Ví dụ: task recreate-backend SERVICE="identity-service api-gateway")'
     cmds:
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --force-recreate --no-deps {{.SERVICE}}'
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --force-recreate --no-deps {{.SERVICE}}"
     requires:
-      vars: [ SERVICE ]
+      vars: [SERVICE]
 
   # --- NHÓM 2: BUILD DOCKER IMAGE ---
   build-infra:
     desc: '🛠️  Chỉ build lại image cho các service INFRA (Ví dụ: task build-infra SERVICE="keycloak")'
     cmds:
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} build --no-cache {{.SERVICE}}'
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} build --no-cache {{.SERVICE}}"
     requires:
-      vars: [ SERVICE ]
+      vars: [SERVICE]
 
   build-backend:
-    desc: '🛠️  Build image cho các service BACKEND (Mặc định tự động compile, tắt đi bằng COMPILE=false)'
+    desc: "🛠️  Build image cho các service BACKEND (Mặc định tự động compile, tắt đi bằng COMPILE=false)"
     cmds:
       - |
         if [ "{{.COMPILE}}" != "false" ]; then
@@ -118,11 +126,11 @@ tasks:
         else
           echo "⏭️  [Bỏ qua bước Compile] Tiến hành build thẳng Docker Image từ file .jar có sẵn..."
         fi
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} build --no-cache {{.SERVICE}}'
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} build --no-cache {{.SERVICE}}"
     vars:
       COMPILE: '{{default "true" .COMPILE}}'
     requires:
-      vars: [ SERVICE ]
+      vars: [SERVICE]
 
   # --- NHÓM 3: DEPLOY (BUILD + RECREATE) ---
   deploy-infra:
@@ -133,10 +141,10 @@ tasks:
       - task: recreate-infra
         vars: { SERVICE: "{{.SERVICE}}" }
     requires:
-      vars: [ SERVICE ]
+      vars: [SERVICE]
 
   deploy-backend:
-    desc: '⚡ Compile + Build + Recreate cụm service BACKEND (Tắt compile bằng COMPILE=false)'
+    desc: "⚡ Compile + Build + Recreate cụm service BACKEND (Tắt compile bằng COMPILE=false)"
     cmds:
       - task: build-backend
         vars: { SERVICE: "{{.SERVICE}}", COMPILE: "{{.COMPILE}}" }
@@ -145,27 +153,27 @@ tasks:
     vars:
       COMPILE: '{{default "true" .COMPILE}}'
     requires:
-      vars: [ SERVICE ]
+      vars: [SERVICE]
 
   # ==============================================================================
   # 4. FRONTEND & KEYCLOAK UTILITIES
   # ==============================================================================
   dev-frontend:
-    desc: '💻 Khởi động Frontend Development Server'
-    dir: '{{.FRONTEND_DIR}}'
+    desc: "💻 Khởi động Frontend Development Server"
+    dir: "{{.FRONTEND_DIR}}"
     cmds:
-      - 'pnpm install'
-      - 'pnpm dev'
-  
+      - "pnpm install"
+      - "pnpm dev"
+
   api-generator:
-    desc: '📝 Sinh code client API từ OpenAPI Spec (Swagger) cho Frontend'
-    dir: '{{.FRONTEND_DIR}}'
+    desc: "📝 Sinh code client API từ OpenAPI Spec (Swagger) cho Frontend"
+    dir: "{{.FRONTEND_DIR}}"
     cmds:
-      - 'pnpm install'
-      - 'pnpm run api-generator'
+      - "pnpm install"
+      - "pnpm run api-generator"
 
   deploy-theme:
-    desc: '🚀 Build và áp dụng theme mới cho container keycloak'
+    desc: "🚀 Build và áp dụng theme mới cho container keycloak"
     cmds:
       - task: build-theme
       - task: recreate-infra
@@ -174,36 +182,36 @@ tasks:
         vars: { NAME: "food-delivery-keycloak", MSG: "Keycloak" }
 
   build-theme:
-    dir: '{{.KEYCLOAK_THEME_DIR}}'
+    dir: "{{.KEYCLOAK_THEME_DIR}}"
     cmds:
-      - 'pnpm install'
-      - 'pnpm run build-keycloak-theme'
+      - "pnpm install"
+      - "pnpm run build-keycloak-theme"
 
   export-keycloak:
-    desc: '🔑 Export cấu hình và users từ realm food-delivery'
+    desc: "🔑 Export cấu hình và users từ realm food-delivery"
     vars:
-      CONTAINER_NAME: 'food-delivery-keycloak'
-      REALM: 'food-delivery'
-      INSIDE_FILE: 'food-delivery-realm.json'
-      HOST_IMPORT_PATH: './development-template/keycloak-realm/realm-export.json'
+      CONTAINER_NAME: "food-delivery-keycloak"
+      REALM: "food-delivery"
+      INSIDE_FILE: "food-delivery-realm.json"
+      HOST_IMPORT_PATH: "./development-template/keycloak-realm/realm-export.json"
     cmds:
-      - 'docker exec -i {{.CONTAINER_NAME}} /opt/keycloak/bin/kc.sh export --optimized --realm {{.REALM}} --file /opt/keycloak/{{.INSIDE_FILE}}'
-      - 'docker cp {{.CONTAINER_NAME}}:/opt/keycloak/{{.INSIDE_FILE}} {{.HOST_IMPORT_PATH}}'
+      - "docker exec -i {{.CONTAINER_NAME}} /opt/keycloak/bin/kc.sh export --optimized --realm {{.REALM}} --file /opt/keycloak/{{.INSIDE_FILE}}"
+      - "docker cp {{.CONTAINER_NAME}}:/opt/keycloak/{{.INSIDE_FILE}} {{.HOST_IMPORT_PATH}}"
 
   # ==============================================================================
   # 5. DOWN & CLEAN
   # ==============================================================================
   down:
-    desc: '🛑 Dừng hệ thống'
+    desc: "🛑 Dừng hệ thống"
     cmds:
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} down'
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} down'
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} down"
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} down"
 
   clean:
-    desc: '🚨 XÓA SẠCH HỆ THỐNG (Volume)'
+    desc: "🚨 XÓA SẠCH HỆ THỐNG (Volume)"
     cmds:
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} down -v'
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} down -v'
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} down -v"
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} down -v"
 
   # ==============================================================================
   # INTERNAL TASKS (HÀM BỔ TRỢ)
@@ -211,9 +219,9 @@ tasks:
   _wait-container:
     internal: true
     cmds:
-      - platforms: [ windows ]
+      - platforms: [windows]
         cmd: powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; while (!(docker ps --filter 'name={{.NAME}}' --filter 'status=running' | Select-String '{{.NAME}}')) { Write-Host '⏳ Chờ {{.MSG}} khởi động...'; Start-Sleep -Seconds 3 }"
-      - platforms: [ darwin, linux ]
+      - platforms: [darwin, linux]
         cmd: |
           until docker ps --filter "name={{.NAME}}" --filter "status=running" | grep -q "{{.NAME}}"; do
             echo '⏳ Chờ {{.MSG}} khởi động...'
@@ -223,10 +231,10 @@ tasks:
   _start-service:
     internal: true
     cmds:
-      - '{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --build --force-recreate {{.SERVICE}} --quiet-pull'
-      - platforms: [ windows ]
+      - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --build --force-recreate {{.SERVICE}} --quiet-pull"
+      - platforms: [windows]
         cmd: powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; while (!(docker ps --filter 'name={{.SERVICE}}' --filter 'health=healthy' | Select-String '{{.SERVICE}}')) { Write-Host '   ({{.MSG}} đang khởi tạo...)'; Start-Sleep -Seconds 3 }"
-      - platforms: [ darwin, linux ]
+      - platforms: [darwin, linux]
         cmd: |
           until docker ps --filter "name={{.SERVICE}}" --filter "health=healthy" | grep -q "{{.SERVICE}}"; do
             echo '   ({{.MSG}} đang khởi tạo...)'
