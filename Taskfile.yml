@@ -174,7 +174,6 @@ tasks:
         vars: { NAME: "food-delivery-keycloak", MSG: "Keycloak" }
 
   build-theme:
-    internal: true
     dir: '{{.KEYCLOAK_THEME_DIR}}'
     cmds:
       - 'pnpm install'
