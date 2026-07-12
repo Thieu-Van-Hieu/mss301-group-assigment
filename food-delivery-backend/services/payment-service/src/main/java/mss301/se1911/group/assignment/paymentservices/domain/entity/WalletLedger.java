@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.LedgerEntryType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Immutable;
 
@@ -62,4 +61,20 @@ public class WalletLedger {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    // ──────────────────────────────────────────────
+    // Entry type enum — specific to ledger entries,
+    // NOT a Value Object.
+    // ──────────────────────────────────────────────
+
+    /**
+     * Double-entry bookkeeping entry types.
+     * DEBIT  = money going out of a wallet.
+     * CREDIT = money coming into a wallet.
+     */
+    public enum LedgerEntryType {
+        DEBIT,
+        CREDIT
+    }
 }
+

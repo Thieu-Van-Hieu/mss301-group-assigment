@@ -1,6 +1,8 @@
 package mss301.se1911.group.assignment.paymentservices.domain.entity;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -14,12 +16,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.OwnerType;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.WalletStatus;
+import mss301.se1911.group.assignment.paymentservices.domain.vo.Money;
+import mss301.se1911.group.assignment.paymentservices.domain.vo.Owner;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -36,20 +37,20 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "owner_id", nullable = false)
-    private UUID ownerId;
+    @Embedded
+    private Owner owner;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "owner_type", nullable = false, length = 20)
-    private OwnerType ownerType;
-
-    @Column(name = "balance", nullable = false, precision = 19, scale = 2)
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "balance", nullable = false, precision = 19, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "currency", nullable = false, length = 3))
     @Builder.Default
-    private BigDecimal balance = BigDecimal.ZERO;
+    private Money balance = Money.zero();
 
-    @Column(name = "currency", nullable = false, length = 3)
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "pending_balance", nullable = false, precision = 19, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "currency", nullable = false, length = 3, insertable = false, updatable = false))
     @Builder.Default
-    private String currency = "VND";
+    private Money pendingBalance = Money.zero();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -67,4 +68,18 @@ public class Wallet {
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
+
+    // ──────────────────────────────────────────────
+    // Status enum — lifecycle state of this entity,
+    // NOT a Value Object.
+    // ──────────────────────────────────────────────
+
+    /**
+     * Lifecycle status of a wallet.
+     */
+    public enum WalletStatus {
+        ACTIVE,
+        FROZEN,
+        CLOSED
+    }
 }

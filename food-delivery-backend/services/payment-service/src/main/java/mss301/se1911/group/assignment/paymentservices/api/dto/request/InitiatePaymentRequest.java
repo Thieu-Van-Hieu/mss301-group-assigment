@@ -3,7 +3,8 @@ package mss301.se1911.group.assignment.paymentservices.api.dto.request;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.PaymentMethod;
+import mss301.se1911.group.assignment.paymentservices.domain.entity.PaymentTransaction.PaymentMethod;
+import mss301.se1911.group.assignment.paymentservices.domain.entity.PaymentTransaction.PaymentGateway;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -23,4 +24,6 @@ public class InitiatePaymentRequest {
 
     @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod;
+
+    private PaymentGateway paymentGateway;
 }

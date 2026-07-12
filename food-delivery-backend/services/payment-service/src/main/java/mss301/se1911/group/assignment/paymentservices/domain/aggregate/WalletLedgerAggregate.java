@@ -3,7 +3,7 @@ package mss301.se1911.group.assignment.paymentservices.domain.aggregate;
 import lombok.Getter;
 import mss301.se1911.group.assignment.paymentservices.domain.entity.WalletLedger;
 import mss301.se1911.group.assignment.paymentservices.domain.exception.PaymentProcessingException;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.LedgerEntryType;
+import mss301.se1911.group.assignment.paymentservices.domain.entity.WalletLedger.LedgerEntryType;
 
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -38,9 +38,9 @@ public class WalletLedgerAggregate {
      * based on the entry type.
      */
     public static WalletLedgerAggregate create(UUID walletId, UUID transactionRefId,
-                                               LedgerEntryType entryType, BigDecimal amount,
-                                               BigDecimal balanceBefore, BigDecimal balanceAfter,
-                                               String description) {
+            LedgerEntryType entryType, BigDecimal amount,
+            BigDecimal balanceBefore, BigDecimal balanceAfter,
+            String description) {
         Objects.requireNonNull(walletId, "walletId must not be null");
         Objects.requireNonNull(transactionRefId, "transactionRefId must not be null");
         Objects.requireNonNull(entryType, "entryType must not be null");
