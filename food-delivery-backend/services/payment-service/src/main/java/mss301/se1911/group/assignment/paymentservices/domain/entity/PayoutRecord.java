@@ -1,6 +1,7 @@
 package mss301.se1911.group.assignment.paymentservices.domain.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,10 +14,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.PayoutStatus;
+import mss301.se1911.group.assignment.paymentservices.domain.vo.PayoutBreakdown;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -45,21 +45,8 @@ public class PayoutRecord {
     @Column(name = "driver_id", nullable = false)
     private UUID driverId;
 
-    @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
-    private BigDecimal totalAmount;
-
-    @Column(name = "delivery_fee", nullable = false, precision = 19, scale = 2)
-    @Builder.Default
-    private BigDecimal deliveryFee = BigDecimal.ZERO;
-
-    @Column(name = "platform_fee", nullable = false, precision = 19, scale = 2)
-    private BigDecimal platformFee;
-
-    @Column(name = "restaurant_payout", nullable = false, precision = 19, scale = 2)
-    private BigDecimal restaurantPayout;
-
-    @Column(name = "driver_payout", nullable = false, precision = 19, scale = 2)
-    private BigDecimal driverPayout;
+    @Embedded
+    private PayoutBreakdown breakdown;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -69,7 +56,45 @@ public class PayoutRecord {
     @Column(name = "processed_at")
     private OffsetDateTime processedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "driver_settlement_status", nullable = false, length = 20)
+    @Builder.Default
+    private SettlementStatus driverSettlementStatus = SettlementStatus.PENDING;
+
+    @Column(name = "driver_settled_at")
+    private OffsetDateTime driverSettledAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "restaurant_settlement_status", nullable = false, length = 20)
+    @Builder.Default
+    private SettlementStatus restaurantSettlementStatus = SettlementStatus.PENDING;
+
+    @Column(name = "restaurant_settled_at")
+    private OffsetDateTime restaurantSettledAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    // ──────────────────────────────────────────────
+    // Status enum — lifecycle state of this entity,
+    // NOT a Value Object.
+    // ──────────────────────────────────────────────
+
+    /**
+     * Lifecycle status of a payout record.
+     */
+    public enum PayoutStatus {
+        PENDING,
+        COMPLETED,
+        FAILED
+    }
+
+    /**
+     * Settlement status of a payout record.
+     */
+    public enum SettlementStatus {
+        PENDING,
+        SETTLED
+    }
 }

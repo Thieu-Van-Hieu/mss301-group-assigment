@@ -3,9 +3,12 @@ package mss301.se1911.group.assignment.paymentservices.domain.aggregate;
 import lombok.Getter;
 import mss301.se1911.group.assignment.paymentservices.domain.entity.PaymentTransaction;
 import mss301.se1911.group.assignment.paymentservices.domain.exception.PaymentProcessingException;
-import mss301.se1911.group.assignment.paymentservices.domain.exception.VnPayValidationException;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.PaymentMethod;
-import mss301.se1911.group.assignment.paymentservices.domain.vo.PaymentStatus;
+import mss301.se1911.group.assignment.paymentservices.domain.exception.SePayValidationException;
+import mss301.se1911.group.assignment.paymentservices.domain.entity.PaymentTransaction.PaymentMethod;
+import mss301.se1911.group.assignment.paymentservices.domain.entity.PaymentTransaction.PaymentGateway;
+import mss301.se1911.group.assignment.paymentservices.domain.entity.PaymentTransaction.PaymentStatus;
+import mss301.se1911.group.assignment.paymentservices.domain.entity.PaymentTransaction.TransactionType;
+import mss301.se1911.group.assignment.paymentservices.domain.vo.Money;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -38,7 +41,7 @@ public class PaymentTransactionAggregate {
      * Factory: create a brand-new payment in PENDING status.
      */
     public static PaymentTransactionAggregate initiate(UUID orderId, UUID customerId,
-                                                       BigDecimal amount, PaymentMethod paymentMethod) {
+                                                       BigDecimal amount, PaymentMethod paymentMethod, PaymentGateway paymentGateway) {
         Objects.requireNonNull(orderId, "orderId must not be null");
         Objects.requireNonNull(customerId, "customerId must not be null");
         Objects.requireNonNull(amount, "amount must not be null");
@@ -51,9 +54,38 @@ public class PaymentTransactionAggregate {
         PaymentTransaction tx = PaymentTransaction.builder()
                 .orderId(orderId)
                 .customerId(customerId)
-                .amount(amount)
+                .money(Money.ofVnd(amount))
                 .paymentMethod(paymentMethod)
+                .paymentGateway(paymentGateway)
                 .status(PaymentStatus.PENDING)
+                .build();
+
+        return new PaymentTransactionAggregate(tx);
+    }
+
+    /**
+     * Factory: create a top-up transaction (no orderId, transactionType = WALLET_TOPUP).
+     * The gatewayMethod specifies which payment gateway to use for funding (SEPAY, PAYOS).
+     */
+    public static PaymentTransactionAggregate initiateTopUp(UUID customerId,
+                                                            BigDecimal amount,
+                                                            PaymentGateway gatewayMethod) {
+        Objects.requireNonNull(customerId, "customerId must not be null");
+        Objects.requireNonNull(amount, "amount must not be null");
+        Objects.requireNonNull(gatewayMethod, "gatewayMethod must not be null");
+
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new PaymentProcessingException("Top-up amount must be greater than zero");
+        }
+
+        PaymentTransaction tx = PaymentTransaction.builder()
+                .orderId(null)
+                .customerId(customerId)
+                .money(Money.ofVnd(amount))
+                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                .paymentGateway(gatewayMethod)
+                .status(PaymentStatus.PENDING)
+                .transactionType(TransactionType.WALLET_TOPUP)
                 .build();
 
         return new PaymentTransactionAggregate(tx);
@@ -111,6 +143,27 @@ public class PaymentTransactionAggregate {
     }
 
     /**
+     * PENDING → PAID for WALLET payments (instant debit from wallet balance).
+     * Idempotent: returns silently if already PAID.
+     */
+    public void confirmWalletPayment() {
+        if (transaction.getPaymentMethod() != PaymentMethod.WALLET) {
+            throw new PaymentProcessingException(
+                    "Order " + transaction.getOrderId() + " is not using WALLET");
+        }
+        if (transaction.getStatus() == PaymentStatus.PAID) {
+            return; // idempotent
+        }
+        if (transaction.getStatus() != PaymentStatus.PENDING) {
+            throw new PaymentProcessingException(
+                    "Cannot confirm WALLET payment for order " + transaction.getOrderId()
+                            + " in status " + transaction.getStatus());
+        }
+        transaction.setStatus(PaymentStatus.PAID);
+        transaction.setPaidAt(OffsetDateTime.now());
+    }
+
+    /**
      * Marks the transaction as FAILED with a reason.
      */
     public void markFailed(String reason) {
@@ -137,42 +190,49 @@ public class PaymentTransactionAggregate {
     // ── Validation Methods ──
 
     /**
-     * Validates that the payment method is VNPay.
+     * Update the actual payment amount. Used when a top-up receives more than requested.
      */
-    public void validateVnPayMethod() {
-        if (transaction.getPaymentMethod() != PaymentMethod.VNPAY) {
+    public void updateAmount(BigDecimal newAmount) {
+        if (newAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new PaymentProcessingException("Payment amount must be greater than zero");
+        }
+        transaction.setMoney(Money.of(newAmount, transaction.getMoney().getCurrency()));
+    }
+
+    /**
+     * Validates that the payment method is SePay.
+     */
+    public void validateSePayMethod() {
+        if (transaction.getPaymentGateway() != PaymentGateway.SEPAY) {
             throw new PaymentProcessingException(
-                    "Transaction " + transaction.getId() + " is not a VNPay payment");
+                    "Transaction " + transaction.getId() + " is not a SePay payment");
         }
     }
 
     /**
-     * Validates the VNPay callback amount against the stored amount.
-     * VNPay sends amount × 100 (e.g., 100,000 VND → vnp_Amount = "10000000").
+     * Validates the SePay webhook amount against the stored amount.
      * <p>
      * If validation fails, the transaction is marked FAILED before throwing.
      */
-    public void validateVnPayAmount(String vnpAmountStr) {
-        if (vnpAmountStr == null) {
-            markFailed("Missing vnp_Amount in VNPay callback");
-            throw new VnPayValidationException("Missing vnp_Amount in VNPay callback");
+    public void validateSePayAmount(BigDecimal transferAmount) {
+        if (transferAmount == null) {
+            markFailed("Missing transferAmount in SePay webhook");
+            throw new SePayValidationException("Missing transferAmount in SePay webhook");
         }
-        try {
-            long vnpAmount = Long.parseLong(vnpAmountStr);
-            long expectedAmount = transaction.getAmount().longValue() * 100;
-            if (vnpAmount != expectedAmount) {
-                String reason = String.format(
-                        "Amount mismatch: VNPay returned %d but expected %d (order amount: %s)",
-                        vnpAmount, expectedAmount, transaction.getAmount());
-                markFailed(reason);
-                throw new VnPayValidationException(reason);
-            }
-        } catch (NumberFormatException e) {
-            String reason = "Invalid vnp_Amount format: " + vnpAmountStr;
+        BigDecimal expectedAmount = transaction.getMoney().getAmount();
+        
+        // Allow overpayment, but fail if transferAmount is less than expected
+        if (transferAmount.compareTo(expectedAmount) < 0) {
+            String reason = String.format(
+                    "Amount mismatch: SePay received %s but expected at least %s",
+                    transferAmount, expectedAmount);
             markFailed(reason);
-            throw new VnPayValidationException(reason);
+            throw new SePayValidationException(reason);
         }
     }
+
+
+
 
     // ── Query Methods ──
 
@@ -180,13 +240,22 @@ public class PaymentTransactionAggregate {
         return transaction.getStatus() == PaymentStatus.PAID;
     }
 
-    public boolean isVnPay() {
-        return transaction.getPaymentMethod() == PaymentMethod.VNPAY;
+    public boolean isSePay() {
+        return transaction.getPaymentGateway() == PaymentGateway.SEPAY;
     }
+
 
     public boolean canProcess() {
         return transaction.getStatus() == PaymentStatus.PENDING
                 || transaction.getStatus() == PaymentStatus.PROCESSING;
+    }
+
+    public boolean isWallet() {
+        return transaction.getPaymentMethod() == PaymentMethod.WALLET;
+    }
+
+    public boolean isTopUp() {
+        return transaction.getTransactionType() == TransactionType.WALLET_TOPUP;
     }
 
     // ── Private Helpers ──

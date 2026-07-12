@@ -16,8 +16,9 @@ public class PaymentResponse {
     private BigDecimal amount;
     private String currency;
     private String paymentMethod;
+    private String paymentGateway;
     private String status;
-    private String payUrl; // Only populated for VNPay PENDING/PROCESSING status
+    private String payUrl; // Only populated for PENDING/PROCESSING status for gateways that require redirect
     private OffsetDateTime paidAt;
     private OffsetDateTime createdAt;
 }
