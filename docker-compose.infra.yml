@@ -51,9 +51,34 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     networks:
       - food-delivery-network
-  
+
   # ==========================================
-  # 3. CONFIG PROCESSOR (Đã sửa lại đường dẫn /config)
+  # 3. POSTGRESQL DATABASE (Dùng chung cho các service, Flyway sẽ migrate khi service khởi động)
+  # ==========================================
+  postgres:
+    image: postgres:16
+    container_name: food-delivery-postgres
+    env_file:
+      - .env.infra # 🚀 Ép container đọc file .env.infra tại gốc
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Script khởi tạo sẵn các database cho từng service (chỉ chạy lần đầu khi volume trống)
+      - ./development-template/postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - food-delivery-network
+
+  # ==========================================
+  # 4. CONFIG PROCESSOR (Đã sửa lại đường dẫn /config)
   # ==========================================
   config-processor:
     image: alpine:3.18
@@ -99,7 +124,7 @@ services:
       - food-delivery-network
 
   # ==========================================
-  # 4. PROMETHEUS SERVER
+  # 5. PROMETHEUS SERVER
   # ==========================================
   prometheus:
     image: prom/prometheus:v2.45.0
@@ -120,7 +145,7 @@ services:
       - food-delivery-network
 
   # ==========================================
-  # 5. GRAFANA
+  # 6. GRAFANA
   # ==========================================
   grafana:
     image: grafana/grafana:10.0.0
@@ -145,7 +170,7 @@ services:
       - food-delivery-network
 
   # ==========================================
-  # 6. LOKI
+  # 7. LOKI
   # ==========================================
   loki:
     image: grafana/loki:2.8.2
@@ -166,7 +191,7 @@ services:
       - food-delivery-network
 
   # ==========================================
-  # 7. PROMTAIL
+  # 8. PROMTAIL
   # ==========================================
   promtail:
     image: grafana/promtail:2.8.2
@@ -187,6 +212,7 @@ services:
 
 volumes:
   keycloak_data:
+  postgres_data:
 
 networks:
   food-delivery-network:

@@ -15,6 +15,7 @@ const BACKEND_SERVICES = [
 const INFRA_SERVICES = [
   "keycloak",
   "kafka",
+  "postgres",
   "config-processor",
   "prometheus",
   "grafana",

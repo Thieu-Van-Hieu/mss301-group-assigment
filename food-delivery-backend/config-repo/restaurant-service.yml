@@ -1,0 +1,23 @@
+server:
+  port: ${RESTAURANT_SERVICE_PORT:8088}
+
+spring:
+  datasource:
+    url: ${RESTAURANT_DB_URL:jdbc:postgresql://localhost:5432/restaurant_db}
+    username: ${RESTAURANT_DB_USERNAME:postgres}
+    password: ${RESTAURANT_DB_PASSWORD:admin}
+  flyway:
+    enabled: ${RESTAURANT_FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+app:
+  kafka:
+    topics:
+      restaurant-created: ${KAFKA_TOPIC_RESTAURANT_CREATED:restaurant-created-topic}
+      menu-updated: ${KAFKA_TOPIC_MENU_UPDATED:menu-updated-topic}
+      restaurant-status-changed: ${KAFKA_TOPIC_RESTAURANT_STATUS_CHANGED:restaurant-status-changed-topic}

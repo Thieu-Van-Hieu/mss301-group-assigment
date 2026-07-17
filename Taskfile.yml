@@ -12,7 +12,7 @@ vars:
 
   # 📦 MẢNG DANH SÁCH SERVICES ĐỂ QUẢN LÝ TẬP TRUNG VÀ CHẠY VÒNG LẶP
   INFRA_SERVICES:
-    sh: echo "keycloak kafka config-processor prometheus grafana loki promtail"
+    sh: echo "keycloak kafka postgres config-processor prometheus grafana loki promtail"
   BACKEND_SERVICES:
     sh: echo "config-server eureka-server api-gateway identity-service delivery-service"
 
