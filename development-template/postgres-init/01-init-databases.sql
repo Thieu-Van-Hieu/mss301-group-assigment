@@ -3,3 +3,4 @@
 
 CREATE DATABASE restaurant_db;
 CREATE DATABASE delivery_db;
+CREATE DATABASE customer_db;

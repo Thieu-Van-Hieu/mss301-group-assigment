@@ -1,0 +1,29 @@
+server:
+  port: ${CUSTOMER_SERVICE_PORT:8087}
+
+spring:
+  datasource:
+    url: ${CUSTOMER_DB_URL:jdbc:postgresql://localhost:5432/customer_db}
+    username: ${CUSTOMER_DB_USERNAME:postgres}
+    password: ${CUSTOMER_DB_PASSWORD:admin}
+  flyway:
+    enabled: ${CUSTOMER_FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    consumer:
+      group-id: customer-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "mss301.se1911.group.assignment.customerservice.infrastructure.messaging.kafka.event"
+        # Order/Identity Service không gửi type-header nên map thẳng payload theo kiểu tham số của listener
+        spring.json.use.type.headers: false
+
+app:
+  kafka:
+    topics:
+      user-onboarding: ${KAFKA_TOPIC_USER_ONBOARDING:user-onboarding-topic}
+      order-created: ${KAFKA_TOPIC_ORDER_CREATED:order-created-topic}
+      order-completed: ${KAFKA_TOPIC_ORDER_COMPLETED:order-completed-topic}
