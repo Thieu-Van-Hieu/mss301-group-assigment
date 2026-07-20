@@ -401,7 +401,7 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "e8673db3-1975-4d59-8b80-8c593141af9c",
+    "id" : "a6b933fe-8f36-4d56-9a41-2cada18cd290",
     "username" : "thieuefvanwhieues@gmail.com",
     "firstName" : "Hiếu",
     "lastName" : "Thiều Văn",
@@ -411,20 +411,20 @@
       "fullName" : [ "Thiều Văn Hiếu" ],
       "phoneNumber" : [ "0395069078" ]
     },
-    "createdTimestamp" : 1781572492693,
+    "createdTimestamp" : 1781757799219,
     "enabled" : true,
     "totp" : false,
     "credentials" : [ {
-      "id" : "fb5ee4a6-51ee-4945-bc88-91b5d4b1d194",
+      "id" : "447b17d1-973d-48c3-9da1-1c5f3016231b",
       "type" : "password",
-      "createdDate" : 1781572493070,
-      "secretData" : "{\"value\":\"1qirh08d2D1BXOJjWJhBBhgtO9TFP+zhLm0FMoTuWth8zDpn45EkxsiJarP8utsuN+zr7zoVmXCAjj+QsCDmPg==\",\"salt\":\"9Rbca/RpT0W9ixJK2q866A==\",\"additionalParameters\":{}}",
+      "createdDate" : 1781757799647,
+      "secretData" : "{\"value\":\"lk6qxlRa8uAjtVA/XwdEAOsdWKNzJypO9fkbtAaK7pP+N6Of06hRvmopuzXZVA6sM8IEa5EEWPu1ekrOl2A0Bg==\",\"salt\":\"FuA7C3QNSlHo2QvAe5MEXg==\",\"additionalParameters\":{}}",
       "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
     } ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
     "realmRoles" : [ "default-roles-food-delivery", "customer" ],
-    "notBefore" : 0,
+    "notBefore" : 1783155483,
     "groups" : [ ]
   } ],
   "scopeMappings" : [ {
@@ -574,8 +574,8 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "**********",
-    "redirectUris" : [ "http://localhost:5000/auth/callback", "/*" ],
+    "secret" : "FB8g4AYZej1PFVWaiwoVGyLFa5Of9N0O",
+    "redirectUris" : [ "http://localhost:5000/auth/callback", "/*", "https://oauth.pstmn.io/v1/callback" ],
     "webOrigins" : [ "/*" ],
     "notBefore" : 0,
     "bearerOnly" : false,
@@ -588,14 +588,14 @@
     "frontchannelLogout" : true,
     "protocol" : "openid-connect",
     "attributes" : {
-      "client.secret.creation.time" : "1781073673",
+      "client.secret.creation.time" : "1781789192",
       "post.logout.redirect.uris" : "+",
       "oauth2.device.authorization.grant.enabled" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false",
       "use.refresh.tokens" : "true",
       "oidc.ciba.grant.enabled" : "false",
       "client.use.lightweight.access.token.enabled" : "false",
-      "backchannel.logout.session.required" : "true",
+      "backchannel.logout.session.required" : "false",
       "client_credentials.use_refresh_token" : "false",
       "tls.client.certificate.bound.access.tokens" : "false",
       "require.pushed.authorization.requests" : "false",
@@ -1242,7 +1242,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "saml-role-list-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "saml-user-property-mapper", "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper" ]
       }
     }, {
       "id" : "616ec3de-4054-46e5-8db0-6192386dba95",
@@ -1302,7 +1302,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper", "saml-role-list-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "oidc-address-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper" ]
       }
     } ],
     "org.keycloak.userprofile.UserProfileProvider" : [ {

@@ -10,11 +10,15 @@ vars:
   FRONTEND_DIR: "./food-delivery-frontend"
   BACKEND_DIR: "./food-delivery-backend"
 
-  # 📦 MẢNG DANH SÁCH SERVICES ĐỂ QUẢN LÝ TẬP TRUNG VÀ CHẠY VÒNG LẶP
-  INFRA_SERVICES:
-    sh: echo "keycloak kafka config-processor prometheus grafana loki promtail"
-  BACKEND_SERVICES:
-    sh: echo "config-server eureka-server api-gateway identity-service delivery-service"
+  # 📦 MẢNG DANH SÁCH SERVICES ĐƯỢC CHỈ ĐỊNH ĐÚNG ĐƯỜNG DẪN MODULE MAVEN
+  INFRA_SERVICES: [ "keycloak", "kafka", "config-processor", "prometheus", "grafana", "loki", "promtail" ]
+  BACKEND_SERVICES: [
+    "infra/config-server",
+    "infra/eureka-server",
+    "infra/api-gateway",
+    "services/identity-service",
+    "services/delivery-service"
+  ]
 
 tasks:
   # ==============================================================================
@@ -54,13 +58,13 @@ tasks:
   up-infra:
     desc: "🐳 Bật toàn bộ hạ tầng nền (Sử dụng vòng lặp)"
     cmds:
-      - 'echo "⏳ Đang kích hoạt các hạ tầng: {{.INFRA_SERVICES}}"'
+      - 'echo "⏳ Đang kích hoạt các hạ tầng..."'
       - for: { var: INFRA_SERVICES }
         cmd: "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --quiet-pull {{.ITEM}}"
 
   up-backend:
-    desc: "⚙️ Bật toàn bộ Spring Boot Services (Tự động build local trước)"
-    deps: [compile]
+    desc: "⚙️ Bật toàn bộ Spring Boot Services (Tự động build local các service chỉ định)"
+    deps: [ compile ]
     cmds:
       - task: _start-service
         vars: { SERVICE: "config-server", MSG: "Config Server" }
@@ -69,9 +73,11 @@ tasks:
       - 'echo "🚀 Khởi động các Core Services còn lại..."'
       - for: { var: BACKEND_SERVICES }
         cmd: |
-          if [ "{{.ITEM}}" != "config-server" ] && [ "{{.ITEM}}" != "eureka-server" ]; then
-            {{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --build --quiet-pull {{.ITEM}}
-          fi
+          {{$srv := .ITEM | base}}
+          {{if and (ne $srv "config-server") (ne $srv "eureka-server")}}
+            echo "🐳 Đang bật container: {{$srv}}"
+            {{$.DOCKER_CMD}} -f {{$.COMPOSE_APP}} up -d --build --quiet-pull {{$srv}}
+          {{end}}
 
   wait-for-infra:
     desc: "🔍 Đợi Keycloak và Kafka sẵn sàng"
@@ -82,55 +88,85 @@ tasks:
         vars: { NAME: "food-delivery-kafka", MSG: "Kafka" }
 
   compile:
-    desc: "☕ Biên dịch toàn bộ các module và service Spring Boot trên máy local"
+    desc: "☕ Chỉ biên dịch đúng các module trong BACKEND_SERVICES (cross-platform)"
     dir: "{{.BACKEND_DIR}}"
     cmds:
-      - 'echo "🛠️  Đang biên dịch siêu tốc bằng CPU máy thật..."'
-      - "mvn clean install -DskipTests -T 1C"
-      - 'echo "✅ Biên dịch thành công! Đã sinh file .jar cho các service."'
+      - 'echo "🛠️ Đang biên dịch siêu tốc các backend services được chỉ định..."'
+      - "mvn clean install -pl {{replace \" \" \",\" .BACKEND_SERVICES_STR}} -am -DskipTests -T 1C"
+      - 'echo "✅ Biên dịch thành công các service đích!"'
+    vars:
+      BACKEND_SERVICES_STR: '{{join " " .BACKEND_SERVICES}}'
 
   # ==============================================================================
   # 3. UTILITIES: HOÀN TOÀN HỖ TRỢ 1 HOẶC NHIỀU SERVICES & CỜ NO-COMPILE
   # ==============================================================================
 
-  # --- NHÓM 1: RECREATE (Tắt đi bật lại nhanh, chấp nhận truyền chuỗi "srv1 srv2") ---
+  # --- NHÓM 1: RECREATE ---
   recreate-infra:
     desc: '🔄 Tái tạo nhanh các service INFRA (Ví dụ: task recreate-infra SERVICE="loki grafana")'
     cmds:
       - "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} up -d --force-recreate --no-deps {{.SERVICE}}"
     requires:
-      vars: [SERVICE]
+      vars: [ SERVICE ]
 
   recreate-backend:
     desc: '🔄 Tái tạo nhanh các service BACKEND (Ví dụ: task recreate-backend SERVICE="identity-service api-gateway")'
     cmds:
       - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --force-recreate --no-deps {{.SERVICE}}"
     requires:
-      vars: [SERVICE]
+      vars: [ SERVICE ]
 
   # --- NHÓM 2: BUILD DOCKER IMAGE ---
   build-infra:
-    desc: '🛠️  Chỉ build lại image cho các service INFRA (Ví dụ: task build-infra SERVICE="keycloak")'
+    desc: '🛠️ Chỉ build lại image cho các service INFRA (Ví dụ: task build-infra SERVICE="keycloak")'
     cmds:
       - "{{.DOCKER_CMD}} -f {{.COMPOSE_INFRA}} build --no-cache {{.SERVICE}}"
     requires:
-      vars: [SERVICE]
+      vars: [ SERVICE ]
 
   build-backend:
-    desc: "🛠️  Build image cho các service BACKEND (Mặc định tự động compile, tắt đi bằng COMPILE=false)"
+    desc: '🛠️ Build image cho service BACKEND (Ví dụ: task deploy-backend SERVICE="config-server")'
     cmds:
       - |
-        if [ "{{.COMPILE}}" != "false" ]; then
-          echo "☕ Đang biên dịch toàn bộ hệ thống bằng Maven trước khi build image..."
-          cd {{.BACKEND_DIR}} && mvn clean install -DskipTests -T 1C
-        else
-          echo "⏭️  [Bỏ qua bước Compile] Tiến hành build thẳng Docker Image từ file .jar có sẵn..."
-        fi
-      - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} build --no-cache {{.SERVICE}}"
+        {{if ne .COMPILE "false"}}
+        echo "☕ Đang biên dịch Maven cho các service được chọn..."
+        
+        # 1. Chuẩn hóa đường dẫn module cho Maven (thêm infra/ hoặc services/ nếu chưa có)
+        MAVEN_TARGETS=""
+        for SRV in {{.SERVICE}}; do
+          if [[ "$SRV" != infra/* && "$SRV" != services/* && "$SRV" != shared/* ]]; then
+            if [[ "$SRV" == "config-server" || "$SRV" == "eureka-server" || "$SRV" == "api-gateway" ]]; then
+              FULL_PATH="infra/$SRV"
+            else
+              FULL_PATH="services/$SRV"
+            fi
+          else
+            FULL_PATH="$SRV"
+          fi
+          MAVEN_TARGETS="$MAVEN_TARGETS,$FULL_PATH"
+        done
+        
+        # Xóa dấu phẩy dư ở đầu chuỗi
+        MAVEN_TARGETS=${MAVEN_TARGETS#,}
+        
+        # 2. Chạy lệnh Maven build
+        cd {{.BACKEND_DIR}} && mvn clean install -pl $MAVEN_TARGETS -am -DskipTests -T 1C
+        {{else}}
+        echo "⏭️ [Bỏ qua bước Compile] Tiến hành build thẳng Docker Image từ file .jar có sẵn..."
+        {{end}}
+      - |
+        # 3. Lấy danh sách tên service sạch (không chứa tiền tố) để gọi Docker Compose
+        DOCKER_SRVS=""
+        for SRV in {{.SERVICE}}; do
+          CLEAN_SRV=$(echo "$SRV" | sed 's|.*/||')
+          DOCKER_SRVS="$DOCKER_SRVS $CLEAN_SRV"
+        done
+        
+        {{.DOCKER_CMD}} -f {{.COMPOSE_APP}} build --no-cache $DOCKER_SRVS
     vars:
       COMPILE: '{{default "true" .COMPILE}}'
     requires:
-      vars: [SERVICE]
+      vars: [ SERVICE ]
 
   # --- NHÓM 3: DEPLOY (BUILD + RECREATE) ---
   deploy-infra:
@@ -141,10 +177,10 @@ tasks:
       - task: recreate-infra
         vars: { SERVICE: "{{.SERVICE}}" }
     requires:
-      vars: [SERVICE]
+      vars: [ SERVICE ]
 
   deploy-backend:
-    desc: "⚡ Compile + Build + Recreate cụm service BACKEND (Tắt compile bằng COMPILE=false)"
+    desc: '⚡ Compile + Build + Recreate service BACKEND (Ví dụ: task deploy-backend SERVICE="services/identity-service")'
     cmds:
       - task: build-backend
         vars: { SERVICE: "{{.SERVICE}}", COMPILE: "{{.COMPILE}}" }
@@ -153,7 +189,7 @@ tasks:
     vars:
       COMPILE: '{{default "true" .COMPILE}}'
     requires:
-      vars: [SERVICE]
+      vars: [ SERVICE ]
 
   # ==============================================================================
   # 4. FRONTEND & KEYCLOAK UTILITIES
@@ -219,9 +255,9 @@ tasks:
   _wait-container:
     internal: true
     cmds:
-      - platforms: [windows]
+      - platforms: [ windows ]
         cmd: powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; while (!(docker ps --filter 'name={{.NAME}}' --filter 'status=running' | Select-String '{{.NAME}}')) { Write-Host '⏳ Chờ {{.MSG}} khởi động...'; Start-Sleep -Seconds 3 }"
-      - platforms: [darwin, linux]
+      - platforms: [ darwin, linux ]
         cmd: |
           until docker ps --filter "name={{.NAME}}" --filter "status=running" | grep -q "{{.NAME}}"; do
             echo '⏳ Chờ {{.MSG}} khởi động...'
@@ -232,9 +268,9 @@ tasks:
     internal: true
     cmds:
       - "{{.DOCKER_CMD}} -f {{.COMPOSE_APP}} up -d --build --force-recreate {{.SERVICE}} --quiet-pull"
-      - platforms: [windows]
+      - platforms: [ windows ]
         cmd: powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; while (!(docker ps --filter 'name={{.SERVICE}}' --filter 'health=healthy' | Select-String '{{.SERVICE}}')) { Write-Host '   ({{.MSG}} đang khởi tạo...)'; Start-Sleep -Seconds 3 }"
-      - platforms: [darwin, linux]
+      - platforms: [ darwin, linux ]
         cmd: |
           until docker ps --filter "name={{.SERVICE}}" --filter "health=healthy" | grep -q "{{.SERVICE}}"; do
             echo '   ({{.MSG}} đang khởi tạo...)'
